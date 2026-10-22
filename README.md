@@ -516,8 +516,8 @@ a fetch of the pinned ref (`scripts/conformance-dir.sh`).
 killed and scored counts and fails only on a timeout or output it cannot read, and a final job runs
 `just mutation-sum` to enforce the floor on the total of all eight files.
 
-`generated/` is never edited by hand. `scripts/generate.go` also declares one path parameter the
-API document leaves out (`signup_id` on the claim operation), in a private copy of the spec.
+`generated/` is never edited by hand. `scripts/generate.go` also declares any path parameter the
+API document leaves out, in a private copy of the spec (the production spec leaves none out today).
 
 ### Accepted deviations from the SDK specification
 

@@ -288,7 +288,7 @@ func TestEveryOperationOfTheCommittedSpecHasItsPathParametersAfterPatching(t *te
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(changed) != 1 || !strings.HasPrefix(changed[0], "POST /v1/agent/accounts/{signup_id}/claim") {
-		t.Errorf("the spec's one known gap changed to %v", changed)
+	if len(changed) != 0 {
+		t.Errorf("the spec leaves path parameters undeclared again: %v", changed)
 	}
 }
