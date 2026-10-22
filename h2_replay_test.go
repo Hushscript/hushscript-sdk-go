@@ -17,7 +17,7 @@ import (
 
 // R54 over HTTP/2: the default client negotiates h2, and net/http's HTTP/2 transport sends a request
 // again, rebuilding its body from GetBody, when the server resets the stream with a code it retries.
-// go1.25 and go1.26 retry PROTOCOL_ERROR and REFUSED_STREAM; go1.27 retries only REFUSED_STREAM. The
+// go1.26 retries PROTOCOL_ERROR and REFUSED_STREAM; go1.27 retries only REFUSED_STREAM. The
 // server below speaks just enough raw HTTP/2 to answer each stream it sees from a script, and to count
 // the body bytes each stream carried. Over cleartext it speaks h2 with prior knowledge (h2c), which the
 // SDK accepts only for localhost.
@@ -297,9 +297,9 @@ func TestANonReplayableRequestIsSentOnceWhenTheServerResetsItsStreamOverHTTP2(t 
 	}
 }
 
-// h2Resets are the stream-reset codes that make an HTTP/2 transport send a request again. go1.25 and
-// go1.26 retry both; go1.27 retries only REFUSED_STREAM, so PROTOCOL_ERROR proves something only on the
-// older two and REFUSED_STREAM on all three.
+// h2Resets are the stream-reset codes that make an HTTP/2 transport send a request again. go1.26
+// retries both; go1.27 retries only REFUSED_STREAM, so PROTOCOL_ERROR proves something only on the
+// older one and REFUSED_STREAM on both.
 var h2Resets = []struct {
 	name string
 	code uint32

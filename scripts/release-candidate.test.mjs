@@ -166,16 +166,16 @@ test('ci runs every runtime test stage while retaining a failed security gate', 
   const body = recipes.split('ci version="":')[1].split('\n\n')[0]
     .split('\n').filter(line => !line.includes('{{'))
     .map(line => line.replace(/^    /, '')).join('\n');
-  const script = `versions="1.25 1.26 1.27"
+  const script = `versions="1.26 1.27"
 just() {
   printf '%s %s\n' "$1" "$2"
-  if [ "$1" = lint ] && [ "$2" = 1.25 ]; then return 3; fi
+  if [ "$1" = lint ] && [ "$2" = 1.26 ]; then return 3; fi
   return 0
 }
 ${body}`;
   const result = spawnSync('bash', ['-c', script], {encoding: 'utf8', timeout: 5000});
   assert.equal(result.error, undefined);
   assert.equal(result.status, 3);
-  assert.deepEqual(result.stdout.trim().split('\n'), ['1.25', '1.26', '1.27'].flatMap(version =>
+  assert.deepEqual(result.stdout.trim().split('\n'), ['1.26', '1.27'].flatMap(version =>
     ['lint', 'test', 'conformance', 'examples', 'build'].map(recipe => `${recipe} ${version}`)));
 });

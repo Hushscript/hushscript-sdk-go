@@ -71,7 +71,7 @@ func main() {
 }
 ```
 
-Requires Go 1.25.0 or newer. Server-side use only: a token must never ship in a browser bundle.
+Requires Go 1.26.0 or newer. Server-side use only: a token must never ship in a browser bundle.
 
 Options that can be off, on or unset are `*bool`. `hushscript.Bool(false)` and `hushscript.Bool(true)`
 build one, and nil keeps the default:
@@ -473,8 +473,7 @@ minutes of the recording; medical mode and each translation target use more. Cur
 
 ## Requirements
 
-Go 1.25.0 or newer. CI tests Go 1.25, 1.26 and 1.27 with automatic toolchain downloads disabled.
-Go 1.25 no longer receives upstream security updates; use Go 1.26.9 or newer for production.
+Go 1.26.0 or newer. CI tests Go 1.26 and 1.27 with automatic toolchain downloads disabled.
 The vulnerability check remains a required gate on every runtime.
 
 ## Links
@@ -497,7 +496,7 @@ all three to the GitHub release. `proxy.golang.org` is asked for the new version
 Everything runs in containers; the host needs only `just` and Docker.
 
 ```sh
-just ci        # lint, test, conformance, examples and build on Go 1.25, 1.26 and 1.27
+just ci        # lint, test, conformance, examples and build on Go 1.26 and 1.27
 just test      # unit tests with the race detector and the 85% coverage floor
 just examples  # every program in examples/ against the conformance mock
 just regen     # regenerate openapi.json and generated/ by hand from the production spec when the API changes

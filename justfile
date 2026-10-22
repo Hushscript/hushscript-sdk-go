@@ -17,18 +17,18 @@ zizmor_image := "ghcr.io/zizmorcore/zizmor:1.31.1@sha256:42d409dbb851d4c5d35a058
 shellcheck_image := "koalaman/shellcheck:v0.11.0@sha256:61862eba1fcf09a484ebcc6feea46f1782532571a34ed51fedf90dd25f925a8d"
 gitleaks_image := "ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
 sandbox := "--rm --init --label sdk.test=1 --cap-drop ALL --read-only --security-opt no-new-privileges --pids-limit 512 --memory 4g --tmpfs /tmp"
-floor := "1.25"
-supported := "1.25 1.26 1.27"
+floor := "1.26"
+supported := "1.26 1.27"
 # The one version that runs govulncheck; older versions skip it.
 vuln_version := "1.27"
 # The one place the mutation floor lives: a percentage, enforced on the killed/scored total of all eight files.
 mutation_floor := "75"
 
-# unit tests with the race detector and the coverage floor on Go 1.25 (default), 1.26 or 1.27; no network beyond the mock (the hint tests read the conformance fixtures: CONFORMANCE_DIR, else CONFORMANCE_CONTEXT, else a fetch of the pinned ref)
+# unit tests with the race detector and the coverage floor on Go 1.26 (default) or 1.27; no network beyond the mock (the hint tests read the conformance fixtures: CONFORMANCE_DIR, else CONFORMANCE_CONTEXT, else a fetch of the pinned ref)
 test version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     CONFORMANCE_DIR="$(scripts/conformance-dir.sh)"
     export CONFORMANCE_DIR
@@ -41,7 +41,7 @@ test version=floor:
 mutation version=floor *files:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     CONFORMANCE_DIR="$(scripts/conformance-dir.sh)"
     export CONFORMANCE_DIR
@@ -54,7 +54,7 @@ mutation version=floor *files:
 mutation-shard file counts_dir version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     CONFORMANCE_DIR="$(scripts/conformance-dir.sh)"
     export CONFORMANCE_DIR
@@ -75,7 +75,7 @@ mutation-sum counts_dir:
 fuzz version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     trap 'docker compose down --remove-orphans >/dev/null 2>&1 || true' EXIT
     docker compose build mock fuzz
@@ -85,7 +85,7 @@ fuzz version=floor:
 conformance version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     trap 'docker compose down --remove-orphans >/dev/null 2>&1 || true' EXIT
     docker compose build mock conformance
@@ -95,7 +95,7 @@ conformance version=floor:
 examples version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     trap 'docker compose down --remove-orphans >/dev/null 2>&1 || true' EXIT
     docker compose build mock examples
@@ -105,7 +105,7 @@ examples version=floor:
 lint version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     trap 'docker compose down --remove-orphans >/dev/null 2>&1 || true' EXIT
     docker compose build mock lint audit
@@ -127,7 +127,7 @@ lint version=floor:
 build version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     docker build --quiet --target dev --build-arg GO_VERSION={{version}} -f docker/dev.Dockerfile -t "hushscript-sdk-go-dev:go{{version}}" .
     user="$(id -u):$(id -g)"
@@ -179,11 +179,11 @@ regen spec="":
     docker compose build regen
     docker compose run --rm ${extra[@]+"${extra[@]}"} regen timeout 600 go run ./scripts ${spec:+"$spec"}
 
-# every CI gate on each selected runtime; no argument runs Go 1.25, 1.26 and 1.27
+# every CI gate on each selected runtime; no argument runs Go 1.26 and 1.27
 ci version="":
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "" { "" } else if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     if [ -n "{{version}}" ]; then versions="{{version}}"; else versions="{{supported}}"; fi
     status=0
     for v in $versions; do
