@@ -71,7 +71,7 @@ func main() {
 }
 ```
 
-Requires Go 1.25.0 or newer. Server-side use only: a token must never ship in a browser bundle.
+Requires Go 1.26.0 or newer. Server-side use only: a token must never ship in a browser bundle.
 
 Options that can be off, on or unset are `*bool`. `hushscript.Bool(false)` and `hushscript.Bool(true)`
 build one, and nil keeps the default:
@@ -473,8 +473,7 @@ minutes of the recording; medical mode and each translation target use more. Cur
 
 ## Requirements
 
-Go 1.25.0 or newer. CI tests Go 1.25, 1.26 and 1.27 with automatic toolchain downloads disabled.
-Go 1.25 no longer receives upstream security updates; use Go 1.26.9 or newer for production.
+Go 1.26.0 or newer. CI tests Go 1.26 and 1.27 with automatic toolchain downloads disabled.
 The vulnerability check remains a required gate on every runtime.
 
 ## Links
@@ -497,10 +496,10 @@ all three to the GitHub release. `proxy.golang.org` is asked for the new version
 Everything runs in containers; the host needs only `just` and Docker.
 
 ```sh
-just ci        # lint, test, conformance, examples and build on Go 1.25, 1.26 and 1.27
+just ci        # lint, test, conformance, examples and build on Go 1.26 and 1.27
 just test      # unit tests with the race detector and the 85% coverage floor
 just examples  # every program in examples/ against the conformance mock
-just regen     # regenerate openapi.json and generated/ from the production spec
+just regen     # regenerate openapi.json and generated/ by hand from the production spec when the API changes
 ```
 
 The conformance suite is read at the ref (a tag or a commit SHA) in `conformance-ref`, the one place it is pinned, and no
@@ -516,8 +515,13 @@ a fetch of the pinned ref (`scripts/conformance-dir.sh`).
 killed and scored counts and fails only on a timeout or output it cannot read, and a final job runs
 `just mutation-sum` to enforce the floor on the total of all eight files.
 
-`generated/` is never edited by hand. `scripts/generate.go` also declares one path parameter the
-API document leaves out (`signup_id` on the claim operation), in a private copy of the spec.
+`generated/` is never edited by hand. `scripts/generate.go` also declares any path parameter the
+API document leaves out, in a private copy of the spec (the production spec leaves none out today).
+Every inline object schema with properties gets a path-derived `x-go-type-name` in that copy
+(`Error.details` becomes `ErrorDetails`), so no generated struct is anonymous and a later field is not
+an incompatible change. `just build` runs apidiff against the last tag and fails on any incompatible
+change that `apidiff-accepted.txt` does not list; the file names its tag on the first line and expires at
+the next release.
 
 ### Accepted deviations from the SDK specification
 

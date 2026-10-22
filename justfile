@@ -10,25 +10,25 @@ export CONFORMANCE_STRICT := env("CONFORMANCE_STRICT", "1")
 conformance_ref := `tr -d '[:space:]' < conformance-ref`
 export CONFORMANCE_CONTEXT := env("CONFORMANCE_CONTEXT", "https://github.com/Hushscript/hushscript-sdk-conformance.git#" + conformance_ref)
 
-node_image := "node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392"
+node_image := "node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d"
 hadolint_image := "hadolint/hadolint:v2.15.1@sha256:32dac94127fd60b7b7e3fbfc65e1383b9b5e25c9bfd7b8536de7a539fe68a12d"
 actionlint_image := "rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667"
 zizmor_image := "ghcr.io/zizmorcore/zizmor:1.31.1@sha256:42d409dbb851d4c5d35a058cf042b828bea1e3f2884378c526eb0974780e18d9"
 shellcheck_image := "koalaman/shellcheck:v0.11.0@sha256:61862eba1fcf09a484ebcc6feea46f1782532571a34ed51fedf90dd25f925a8d"
 gitleaks_image := "ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
 sandbox := "--rm --init --label sdk.test=1 --cap-drop ALL --read-only --security-opt no-new-privileges --pids-limit 512 --memory 4g --tmpfs /tmp"
-floor := "1.25"
-supported := "1.25 1.26 1.27"
+floor := "1.26"
+supported := "1.26 1.27"
 # The one version that runs govulncheck; older versions skip it.
 vuln_version := "1.27"
 # The one place the mutation floor lives: a percentage, enforced on the killed/scored total of all eight files.
 mutation_floor := "75"
 
-# unit tests with the race detector and the coverage floor on Go 1.25 (default), 1.26 or 1.27; no network beyond the mock (the hint tests read the conformance fixtures: CONFORMANCE_DIR, else CONFORMANCE_CONTEXT, else a fetch of the pinned ref)
+# unit tests with the race detector and the coverage floor on Go 1.26 (default) or 1.27; no network beyond the mock (the hint tests read the conformance fixtures: CONFORMANCE_DIR, else CONFORMANCE_CONTEXT, else a fetch of the pinned ref)
 test version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     CONFORMANCE_DIR="$(scripts/conformance-dir.sh)"
     export CONFORMANCE_DIR
@@ -41,7 +41,7 @@ test version=floor:
 mutation version=floor *files:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     CONFORMANCE_DIR="$(scripts/conformance-dir.sh)"
     export CONFORMANCE_DIR
@@ -54,7 +54,7 @@ mutation version=floor *files:
 mutation-shard file counts_dir version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     CONFORMANCE_DIR="$(scripts/conformance-dir.sh)"
     export CONFORMANCE_DIR
@@ -75,7 +75,7 @@ mutation-sum counts_dir:
 fuzz version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     trap 'docker compose down --remove-orphans >/dev/null 2>&1 || true' EXIT
     docker compose build mock fuzz
@@ -85,7 +85,7 @@ fuzz version=floor:
 conformance version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     trap 'docker compose down --remove-orphans >/dev/null 2>&1 || true' EXIT
     docker compose build mock conformance
@@ -95,7 +95,7 @@ conformance version=floor:
 examples version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     trap 'docker compose down --remove-orphans >/dev/null 2>&1 || true' EXIT
     docker compose build mock examples
@@ -105,7 +105,7 @@ examples version=floor:
 lint version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     trap 'docker compose down --remove-orphans >/dev/null 2>&1 || true' EXIT
     docker compose build mock lint audit
@@ -113,7 +113,7 @@ lint version=floor:
     run() { docker run {{sandbox}} --network none --user "$(id -u):$(id -g)" -v "$(pwd)":/work:ro -w /work -e HOME=/tmp "$@"; }
     run {{hadolint_image}} /bin/hadolint docker/dev.Dockerfile docker/typos.Dockerfile
     run {{actionlint_image}} -color
-    run node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 timeout 60 node --test scripts/release-candidate.test.mjs
+    run node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d timeout 60 node --test scripts/release-candidate.test.mjs
     run --label codex.adhoc=1 {{node_image}} timeout 60 node --test scripts/release-candidate.test.mjs
     run {{zizmor_image}} --pedantic --offline --config zizmor.yml .github
     run {{shellcheck_image}} scripts/*.sh
@@ -127,7 +127,7 @@ lint version=floor:
 build version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     export GO_VERSION={{version}}
     docker build --quiet --target dev --build-arg GO_VERSION={{version}} -f docker/dev.Dockerfile -t "hushscript-sdk-go-dev:go{{version}}" .
     user="$(id -u):$(id -g)"
@@ -139,12 +139,25 @@ build version=floor:
       echo "apidiff: no release tag yet, skipped"
     else
       old="$(mktemp -d)"
-      trap 'rm -rf "$old"' EXIT
+      accepted="$(mktemp)"
+      trap 'rm -rf "$old" "$accepted"' EXIT
       git archive "$last" | tar -x -C "$old"
+      # apidiff-accepted.txt names the tag it applies to on its first line and lists, one per line, the incompatible
+      # changes accepted against that tag. Any other incompatible line fails the build, and the file is ignored
+      # (it expires) once a newer tag exists.
+      if [ -f apidiff-accepted.txt ] && [ "$(head -n1 apidiff-accepted.txt)" = "$last" ]; then
+        tail -n +2 apidiff-accepted.txt > "$accepted"
+      fi
       # The image caches only the current module graph (GOPROXY=off), so the old
       # source is built against today's go.mod/go.sum, as an upgrading consumer would.
-      docker run {{sandbox}} --network none --user "$user" -e GOPROXY=off --tmpfs /tmp:exec,size=3g -v "$old":/old:ro "hushscript-sdk-go-dev:go{{version}}" \
-        sh -c 'cp -r /old /tmp/old-src && cp /work/go.mod /work/go.sum /tmp/old-src/ && cd /tmp/old-src && old_module="$(go list -m)" && go tool -modfile=/work/tools/go.mod apidiff -m -w /tmp/old.export "$old_module" && cd /work && go tool -modfile=tools/go.mod apidiff -m -incompatible /tmp/old.export github.com/Hushscript/hushscript-sdk-go'
+      incompatible="$(docker run {{sandbox}} --network none --user "$user" -e GOPROXY=off --tmpfs /tmp:exec,size=3g -v "$old":/old:ro "hushscript-sdk-go-dev:go{{version}}" \
+        sh -c 'cp -r /old /tmp/old-src && cp /work/go.mod /work/go.sum /tmp/old-src/ && cd /tmp/old-src && old_module="$(go list -m)" && go tool -modfile=/work/tools/go.mod apidiff -m -w /tmp/old.export "$old_module" && cd /work && go tool -modfile=tools/go.mod apidiff -m -incompatible /tmp/old.export github.com/Hushscript/hushscript-sdk-go')"
+      unexpected="$(printf '%s\n' "$incompatible" | grep -v '^$' | grep -vxFf "$accepted" || true)"
+      if [ -n "$unexpected" ]; then
+        echo "apidiff: incompatible changes against $last that apidiff-accepted.txt does not list:" >&2
+        echo "$unexpected" >&2
+        exit 1
+      fi
     fi
 
 # regenerate openapi.json and generated/ from the production spec, or from a local spec file (outbound network)
@@ -166,11 +179,11 @@ regen spec="":
     docker compose build regen
     docker compose run --rm ${extra[@]+"${extra[@]}"} regen timeout 600 go run ./scripts ${spec:+"$spec"}
 
-# every CI gate on each selected runtime; no argument runs Go 1.25, 1.26 and 1.27
+# every CI gate on each selected runtime; no argument runs Go 1.26 and 1.27
 ci version="":
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ if version == "" { "" } else if version == "1.25" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.25, 1.26 or 1.27") } }}
+    {{ if version == "" { "" } else if version == "1.26" { "" } else if version == "1.27" { "" } else { error("version must be 1.26 or 1.27") } }}
     if [ -n "{{version}}" ]; then versions="{{version}}"; else versions="{{supported}}"; fi
     status=0
     for v in $versions; do
