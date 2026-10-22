@@ -500,7 +500,7 @@ Everything runs in containers; the host needs only `just` and Docker.
 just ci        # lint, test, conformance, examples and build on Go 1.25, 1.26 and 1.27
 just test      # unit tests with the race detector and the 85% coverage floor
 just examples  # every program in examples/ against the conformance mock
-just regen     # regenerate openapi.json and generated/ from the production spec
+just regen     # regenerate openapi.json and generated/ by hand from the production spec when the API changes
 ```
 
 The conformance suite is read at the ref (a tag or a commit SHA) in `conformance-ref`, the one place it is pinned, and no
