@@ -139,12 +139,25 @@ build version=floor:
       echo "apidiff: no release tag yet, skipped"
     else
       old="$(mktemp -d)"
-      trap 'rm -rf "$old"' EXIT
+      accepted="$(mktemp)"
+      trap 'rm -rf "$old" "$accepted"' EXIT
       git archive "$last" | tar -x -C "$old"
+      # apidiff-accepted.txt names the tag it applies to on its first line and lists, one per line, the incompatible
+      # changes accepted against that tag. Any other incompatible line fails the build, and the file is ignored
+      # (it expires) once a newer tag exists.
+      if [ -f apidiff-accepted.txt ] && [ "$(head -n1 apidiff-accepted.txt)" = "$last" ]; then
+        tail -n +2 apidiff-accepted.txt > "$accepted"
+      fi
       # The image caches only the current module graph (GOPROXY=off), so the old
       # source is built against today's go.mod/go.sum, as an upgrading consumer would.
-      docker run {{sandbox}} --network none --user "$user" -e GOPROXY=off --tmpfs /tmp:exec,size=3g -v "$old":/old:ro "hushscript-sdk-go-dev:go{{version}}" \
-        sh -c 'cp -r /old /tmp/old-src && cp /work/go.mod /work/go.sum /tmp/old-src/ && cd /tmp/old-src && old_module="$(go list -m)" && go tool -modfile=/work/tools/go.mod apidiff -m -w /tmp/old.export "$old_module" && cd /work && go tool -modfile=tools/go.mod apidiff -m -incompatible /tmp/old.export github.com/Hushscript/hushscript-sdk-go'
+      incompatible="$(docker run {{sandbox}} --network none --user "$user" -e GOPROXY=off --tmpfs /tmp:exec,size=3g -v "$old":/old:ro "hushscript-sdk-go-dev:go{{version}}" \
+        sh -c 'cp -r /old /tmp/old-src && cp /work/go.mod /work/go.sum /tmp/old-src/ && cd /tmp/old-src && old_module="$(go list -m)" && go tool -modfile=/work/tools/go.mod apidiff -m -w /tmp/old.export "$old_module" && cd /work && go tool -modfile=tools/go.mod apidiff -m -incompatible /tmp/old.export github.com/Hushscript/hushscript-sdk-go')"
+      unexpected="$(printf '%s\n' "$incompatible" | grep -v '^$' | grep -vxFf "$accepted" || true)"
+      if [ -n "$unexpected" ]; then
+        echo "apidiff: incompatible changes against $last that apidiff-accepted.txt does not list:" >&2
+        echo "$unexpected" >&2
+        exit 1
+      fi
     fi
 
 # regenerate openapi.json and generated/ from the production spec, or from a local spec file (outbound network)

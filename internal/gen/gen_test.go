@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -290,5 +291,78 @@ func TestEveryOperationOfTheCommittedSpecHasItsPathParametersAfterPatching(t *te
 	}
 	if len(changed) != 0 {
 		t.Errorf("the spec leaves path parameters undeclared again: %v", changed)
+	}
+}
+
+func TestNamesInlineObjectsFromWhereTheySit(t *testing.T) {
+	spec := parse(t, `{"components":{"schemas":{
+		"Error":{"type":"object","properties":{"details":{"type":["object","null"],"properties":{"a":{"type":"string"}}}}},
+		"Receipt":{"type":"object","properties":{"parts":{"type":"array","items":{"type":"object","properties":{"n":{"type":"integer"}}}},
+			"line":{"type":"array","items":{"type":"object","properties":{"n":{"type":"integer"}}}},
+			"named":{"type":"object","x-go-type-name":"Chosen","properties":{"inner":{"type":"object","properties":{"n":{"type":"integer"}}}}},
+			"one":{"anyOf":[{"type":"object","properties":{"n":{"type":"integer"}}},{"type":"null"}]},
+			"two":{"oneOf":[{"type":"object","properties":{"n":{"type":"integer"}}},{"type":"object","properties":{"m":{"type":"integer"}}}]},
+			"ref":{"$ref":"#/components/schemas/Error"},"plain":{"type":"object"}}}}},
+	"paths":{"/x":{"post":{"operationId":"make_thing",
+		"requestBody":{"content":{"application/json":{"schema":{"type":"object","properties":{"opts":{"type":"object","properties":{"k":{"type":"string"}}}}}}}},
+		"responses":{"200":{"content":{"application/json":{"schema":{"type":"object","properties":{"ok":{"type":"boolean"}}}}}},
+			"202":{"content":{"application/json":{"schema":{"type":"object","properties":{"ok":{"type":"boolean"}}}}}},
+			"400":{"$ref":"#/components/responses/Bad"}}}}}}}`)
+	names, err := gen.NameInlineObjects(spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"Chosen", "ChosenInner", "ErrorDetails", "MakeThingRequestOpts", "MakeThingResult", "MakeThingResult202",
+		"ReceiptLineItem", "ReceiptOne", "ReceiptPart", "ReceiptTwoVariant1", "ReceiptTwoVariant2",
+	}
+	if strings.Join(names, " ") != strings.Join(want, " ") {
+		t.Errorf("names = %v, want %v", names, want)
+	}
+	if again, err := gen.NameInlineObjects(spec); err != nil || strings.Join(again, " ") != strings.Join(want, " ") {
+		t.Errorf("a second pass gave %v, %v", again, err)
+	}
+}
+
+func TestRefusesAnInlineNameAnotherTypeAlreadyHolds(t *testing.T) {
+	for name, text := range map[string]string{
+		"a component":        `{"components":{"schemas":{"Error":{"type":"object","properties":{"details":{"type":"object","properties":{"a":{"type":"string"}}}}},"ErrorDetails":{"type":"object"}}},"paths":{}}`,
+		"an operation type":  `{"components":{"schemas":{"MakeThingResponse":{"type":"object"}}},"paths":{"/x":{"get":{"operationId":"make_thing","responses":{}}}}}`,
+		"two inline objects": `{"components":{"schemas":{"A":{"type":"object","properties":{"bC":{"type":"object","properties":{"x":{"type":"string"}}}}},"AB":{"type":"object","properties":{"c":{"type":"object","properties":{"x":{"type":"string"}}}}}}},"paths":{}}`,
+	} {
+		if _, err := gen.NameInlineObjects(parse(t, text)); err == nil || !strings.Contains(err.Error(), "wanted by both") {
+			t.Errorf("%s: error = %v", name, err)
+		}
+	}
+}
+
+func TestNamesEveryInlineObjectOfTheCommittedSpec(t *testing.T) {
+	spec := committedSpec(t)
+	if _, err := gen.NameInlineObjects(spec); err != nil {
+		t.Fatal(err)
+	}
+	var unnamed []string
+	var find func(node any, path string)
+	find = func(node any, path string) {
+		switch value := node.(type) {
+		case map[string]any:
+			_, isObject := value["properties"]
+			_, isReference := value["$ref"]
+			_, named := value["x-go-type-name"]
+			if isObject && !isReference && !named && strings.Contains(path, ".properties.") {
+				unnamed = append(unnamed, path)
+			}
+			for key, child := range value {
+				find(child, path+"."+key)
+			}
+		case []any:
+			for index, child := range value {
+				find(child, path+"."+strconv.Itoa(index))
+			}
+		}
+	}
+	find(spec["components"], "components")
+	if len(unnamed) != 0 {
+		t.Errorf("inline objects left anonymous: %v", unnamed)
 	}
 }

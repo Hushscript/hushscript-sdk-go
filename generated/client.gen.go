@@ -396,12 +396,8 @@ type AgentCredentialsRotateResponse struct {
 // AgentSignupRequest The client must never supply amount: it is derived server side from pack.
 type AgentSignupRequest struct {
 	// AcceptTermsVersion Must equal the server's current policy version or the request is refused with policy_version_stale, which names the current value.
-	AcceptTermsVersion string `json:"accept_terms_version"`
-	Agent              struct {
-		ContactUrl *string `json:"contact_url,omitempty"`
-		Name       string  `json:"name"`
-		Platform   string  `json:"platform"`
-	} `json:"agent"`
+	AcceptTermsVersion string                  `json:"accept_terms_version"`
+	Agent              AgentSignupRequestAgent `json:"agent"`
 
 	// ContactEmail Address for receipts and notices only. Never used to sign in; the created account has no login path of its own.
 	ContactEmail string `json:"contact_email"`
@@ -414,6 +410,13 @@ type AgentSignupRequest struct {
 
 	// PackId Which minute pack to buy. See GET /v1/billing/packs for the catalogue.
 	PackId string `json:"pack_id"`
+}
+
+// AgentSignupRequestAgent defines model for AgentSignupRequest.agent.
+type AgentSignupRequestAgent struct {
+	ContactUrl *string `json:"contact_url,omitempty"`
+	Name       string  `json:"name"`
+	Platform   string  `json:"platform"`
 }
 
 // AgentSignupResponse defines model for AgentSignupResponse.
@@ -526,22 +529,28 @@ type DeletedTranscript struct {
 	Id              string `json:"id"`
 
 	// Receipt The receipt recorded when the transcript was deleted, kept so the deletion stays evidenced after the content itself is gone. Null when the stored receipt could not be read back.
-	Receipt *struct {
-		// CreatedAt UTC timestamp, seconds precision.
-		CreatedAt string `json:"created_at"`
-		Items     []struct {
-			// DeletedAt UTC timestamp, seconds precision, e.g. 2026-09-07T14:53:35Z.
-			DeletedAt string `json:"deleted_at"`
-			Kind      string `json:"kind"`
-		} `json:"items"`
-		Type    string `json:"type"`
-		Version int    `json:"version"`
-	} `json:"receipt"`
-	Title string `json:"title"`
+	Receipt *DeletedTranscriptReceipt `json:"receipt"`
+	Title   string                    `json:"title"`
 }
 
 // DeletedTranscriptCause Which deletion path removed the transcript: an explicit delete (manual), the transcript's own auto_delete_at retention date (scheduled), the personal-transcript purge after about 24 months of account inactivity and a 30-day warning (dormant; excludes legal holds and firm custody), or the global retention sweep (expired).
 type DeletedTranscriptCause string
+
+// DeletedTranscriptReceiptItem defines model for DeletedTranscript.receipt.items.
+type DeletedTranscriptReceiptItem struct {
+	// DeletedAt UTC timestamp, seconds precision, e.g. 2026-09-07T14:53:35Z.
+	DeletedAt string `json:"deleted_at"`
+	Kind      string `json:"kind"`
+}
+
+// DeletedTranscriptReceipt The receipt recorded when the transcript was deleted, kept so the deletion stays evidenced after the content itself is gone. Null when the stored receipt could not be read back.
+type DeletedTranscriptReceipt struct {
+	// CreatedAt UTC timestamp, seconds precision.
+	CreatedAt string                         `json:"created_at"`
+	Items     []DeletedTranscriptReceiptItem `json:"items"`
+	Type      string                         `json:"type"`
+	Version   int                            `json:"version"`
+}
 
 // DeletedTranscriptsResponse defines model for DeletedTranscriptsResponse.
 type DeletedTranscriptsResponse struct {
@@ -582,22 +591,7 @@ type Error struct {
 	Code int `json:"code"`
 
 	// Details Structured recovery detail for an error that is not a plain balance shortfall. Present on agent_pack_locked, agent_purchase_capped and policy_version_stale.
-	Details *struct {
-		// AllowedPacks Pack ids the agent account may buy right now. Present on agent_pack_locked; retry with one of these.
-		AllowedPacks *[]string `json:"allowed_packs,omitempty"`
-
-		// CurrentVersion The server's current terms version. Present on policy_version_stale; send it as accept_terms_version to retry.
-		CurrentVersion *string `json:"current_version,omitempty"`
-
-		// Limit The per-credential purchase cap for the rolling window. Present on agent_purchase_capped.
-		Limit *int `json:"limit,omitempty"`
-
-		// RetryAfterSeconds Seconds until the oldest purchase counted toward the cap leaves the window. Present on agent_purchase_capped; matches the Retry-After header.
-		RetryAfterSeconds *int `json:"retry_after_seconds,omitempty"`
-
-		// WindowSeconds The length of the rolling window in seconds. Present on agent_purchase_capped.
-		WindowSeconds *int `json:"window_seconds,omitempty"`
-	} `json:"details,omitempty"`
+	Details *ErrorDetails `json:"details,omitempty"`
 
 	// Error The error's slug. See x-error-catalog for the full list.
 	Error string `json:"error"`
@@ -613,6 +607,24 @@ type Error struct {
 
 	// OrgBalanceSeconds The organization's shared pool balance in seconds. Present on an org-funded balance-shortfall error instead of balance_seconds.
 	OrgBalanceSeconds *int `json:"org_balance_seconds,omitempty"`
+}
+
+// ErrorDetails Structured recovery detail for an error that is not a plain balance shortfall. Present on agent_pack_locked, agent_purchase_capped and policy_version_stale.
+type ErrorDetails struct {
+	// AllowedPacks Pack ids the agent account may buy right now. Present on agent_pack_locked; retry with one of these.
+	AllowedPacks *[]string `json:"allowed_packs,omitempty"`
+
+	// CurrentVersion The server's current terms version. Present on policy_version_stale; send it as accept_terms_version to retry.
+	CurrentVersion *string `json:"current_version,omitempty"`
+
+	// Limit The per-credential purchase cap for the rolling window. Present on agent_purchase_capped.
+	Limit *int `json:"limit,omitempty"`
+
+	// RetryAfterSeconds Seconds until the oldest purchase counted toward the cap leaves the window. Present on agent_purchase_capped; matches the Retry-After header.
+	RetryAfterSeconds *int `json:"retry_after_seconds,omitempty"`
+
+	// WindowSeconds The length of the rolling window in seconds. Present on agent_purchase_capped.
+	WindowSeconds *int `json:"window_seconds,omitempty"`
 }
 
 // HoldsResponse defines model for HoldsResponse.
@@ -1109,23 +1121,26 @@ type UploadCreateResponse struct {
 	State string `json:"state"`
 
 	// Upload One page of presigned direct-to-R2 PUT URLs, or null when direct-to-R2 uploads are not available for this job and parts must be sent to upload_part instead.
-	Upload *struct {
-		// NextPartNumber The next part number not covered by this page, or null once every part has a URL.
-		NextPartNumber *int `json:"next_part_number"`
-
-		// PartSizeBytes The byte size of every part except the last.
-		PartSizeBytes int `json:"part_size_bytes"`
-
-		// PartUrls Presigned URLs for this page's parts, starting at the requested (or first) part number.
-		PartUrls []PresignedPartUrl `json:"part_urls"`
-
-		// TotalParts The total number of parts this upload is split into.
-		TotalParts int `json:"total_parts"`
-	} `json:"upload"`
+	Upload *UploadCreateResponseUpload `json:"upload"`
 }
 
 // UploadCreateResponseFunding Which balance this upload's hold was placed against.
 type UploadCreateResponseFunding string
+
+// UploadCreateResponseUpload One page of presigned direct-to-R2 PUT URLs, or null when direct-to-R2 uploads are not available for this job and parts must be sent to upload_part instead.
+type UploadCreateResponseUpload struct {
+	// NextPartNumber The next part number not covered by this page, or null once every part has a URL.
+	NextPartNumber *int `json:"next_part_number"`
+
+	// PartSizeBytes The byte size of every part except the last.
+	PartSizeBytes int `json:"part_size_bytes"`
+
+	// PartUrls Presigned URLs for this page's parts, starting at the requested (or first) part number.
+	PartUrls []PresignedPartUrl `json:"part_urls"`
+
+	// TotalParts The total number of parts this upload is split into.
+	TotalParts int `json:"total_parts"`
+}
 
 // UploadLimits The caller's current upload admission limits, shared by every response that carries them.
 type UploadLimits struct {
@@ -1160,6 +1175,11 @@ type RateLimited = Error
 type SetDefaultCardJSONBody struct {
 	// PaymentMethodId The id of a card from list_saved_cards to make the new default.
 	PaymentMethodId string `json:"payment_method_id"`
+}
+
+// SetDefaultCardResult defines parameters for SetDefaultCard.
+type SetDefaultCardResult struct {
+	Ok bool `json:"ok"`
 }
 
 // ListHoldsParams defines parameters for ListHolds.
@@ -1243,6 +1263,14 @@ type ScheduleOrgCustodyJSONBody struct {
 // ScheduleOrgCustodyJSONBodyCustody defines parameters for ScheduleOrgCustody.
 type ScheduleOrgCustodyJSONBodyCustody string
 
+// ScheduleOrgCustodyResult defines parameters for ScheduleOrgCustody.
+type ScheduleOrgCustodyResult struct {
+	Ok bool `json:"ok"`
+
+	// SwitchAt Unix timestamp when the switch to firm custody takes effect.
+	SwitchAt int `json:"switch_at"`
+}
+
 // ListOrgInvoicesParams defines parameters for ListOrgInvoices.
 type ListOrgInvoicesParams struct {
 	// Cursor An opaque paging token from a previous page's next_cursor. Omit to fetch the first page.
@@ -1300,6 +1328,11 @@ type PatchOrgMemberJSONBody struct {
 	MonthlyCapSeconds *int `json:"monthly_cap_seconds,omitempty"`
 }
 
+// PatchOrgMemberResult defines parameters for PatchOrgMember.
+type PatchOrgMemberResult struct {
+	Ok bool `json:"ok"`
+}
+
 // ListOrgTranscriptsParams defines parameters for ListOrgTranscripts.
 type ListOrgTranscriptsParams struct {
 	// Cursor An opaque paging token from a previous page's next_cursor. Omit to fetch the first page.
@@ -1307,6 +1340,16 @@ type ListOrgTranscriptsParams struct {
 
 	// Limit Maximum rows to return.
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// LiftTranscriptHoldResult defines parameters for LiftTranscriptHold.
+type LiftTranscriptHoldResult struct {
+	Ok bool `json:"ok"`
+}
+
+// PlaceTranscriptHoldResult defines parameters for PlaceTranscriptHold.
+type PlaceTranscriptHoldResult struct {
+	Ok bool `json:"ok"`
 }
 
 // OrgUsageReportParams defines parameters for OrgUsageReport.
@@ -1381,47 +1424,79 @@ type CreateUploadJSONBody struct {
 	SizeBytes int `json:"size_bytes"`
 
 	// Title An optional display title. A value longer than 300 bytes is truncated on a character boundary rather than rejected, and this response does not echo the stored value; read it back from the transcript once the job completes. In `private` mode the title is not stored at all.
-	Title                *string `json:"title,omitempty"`
-	TranscriptionOptions *struct {
-		// AutoGenerateInsights Override the account's automatic-Insights default for this upload alone. Omit to inherit the account default; an explicit false always suppresses automatic generation for this upload.
-		AutoGenerateInsights *bool `json:"auto_generate_insights,omitempty"`
+	Title                *string                                  `json:"title,omitempty"`
+	TranscriptionOptions *CreateUploadRequestTranscriptionOptions `json:"transcription_options,omitempty"`
+}
 
-		// KeytermsPrompt Domain vocabulary to bias transcription toward, up to 1000 terms of at most 6 words each.
-		KeytermsPrompt *[]string `json:"keyterms_prompt,omitempty"`
+// CreateUploadRequestTranscriptionOptions defines parameters for CreateUpload.
+type CreateUploadRequestTranscriptionOptions struct {
+	// AutoGenerateInsights Override the account's automatic-Insights default for this upload alone. Omit to inherit the account default; an explicit false always suppresses automatic generation for this upload.
+	AutoGenerateInsights *bool `json:"auto_generate_insights,omitempty"`
 
-		// LanguageCode Force a specific spoken language instead of auto-detection.
-		LanguageCode *string `json:"language_code,omitempty"`
+	// KeytermsPrompt Domain vocabulary to bias transcription toward, up to 1000 terms of at most 6 words each.
+	KeytermsPrompt *[]string `json:"keyterms_prompt,omitempty"`
 
-		// MedicalMode Bill and transcribe as a medical dictation. Requires language_code to be one of en, es, fr, de; billed at a 100 percent surcharge on the duration.
-		MedicalMode *bool `json:"medical_mode,omitempty"`
+	// LanguageCode Force a specific spoken language instead of auto-detection.
+	LanguageCode *string `json:"language_code,omitempty"`
 
-		// Multichannel Transcribe each audio channel independently. Billed per channel: a stereo file counts twice, a 3-channel file three times, up to 8 channels, and the medical surcharge applies on top of that; translation targets stay on a single duration. The channel count is the most channels any audio track of the file carries. A file with more than 8 channels, or one whose channel count cannot be read, falls back to mixed audio with speaker labels and is billed once. Without this option the file is transcribed as one mixed channel and billed once. The initial hold at upload creation is for a single channel; verification raises it to the per-channel amount and fails the job with insufficient_balance if the balance cannot cover it.
-		Multichannel *bool `json:"multichannel,omitempty"`
+	// MedicalMode Bill and transcribe as a medical dictation. Requires language_code to be one of en, es, fr, de; billed at a 100 percent surcharge on the duration.
+	MedicalMode *bool `json:"medical_mode,omitempty"`
 
-		// Prompt Free-text context to bias transcription toward.
-		Prompt *string `json:"prompt,omitempty"`
+	// Multichannel Transcribe each audio channel independently. Billed per channel: a stereo file counts twice, a 3-channel file three times, up to 8 channels, and the medical surcharge applies on top of that; translation targets stay on a single duration. The channel count is the most channels any audio track of the file carries. A file with more than 8 channels, or one whose channel count cannot be read, falls back to mixed audio with speaker labels and is billed once. Without this option the file is transcribed as one mixed channel and billed once. The initial hold at upload creation is for a single channel; verification raises it to the per-channel amount and fails the job with insufficient_balance if the balance cannot cover it.
+	Multichannel *bool `json:"multichannel,omitempty"`
 
-		// SpeakerDetection Label distinct speakers in the transcript. Forced on automatically when translation_targets is non-empty.
-		SpeakerDetection *bool `json:"speaker_detection,omitempty"`
+	// Prompt Free-text context to bias transcription toward.
+	Prompt *string `json:"prompt,omitempty"`
 
-		// TranslationTargets Locales to additionally translate the transcript into. Each target adds a 25 percent surcharge on the duration and forces speaker_detection on.
-		TranslationTargets *[]string `json:"translation_targets,omitempty"`
-	} `json:"transcription_options,omitempty"`
+	// SpeakerDetection Label distinct speakers in the transcript. Forced on automatically when translation_targets is non-empty.
+	SpeakerDetection *bool `json:"speaker_detection,omitempty"`
+
+	// TranslationTargets Locales to additionally translate the transcript into. Each target adds a 25 percent surcharge on the duration and forces speaker_detection on.
+	TranslationTargets *[]string `json:"translation_targets,omitempty"`
 }
 
 // CompleteUploadJSONBody defines parameters for CompleteUpload.
 type CompleteUploadJSONBody struct {
 	// Parts The part number and ETag of every part a direct-to-R2 client uploaded. Omit entirely for a worker-uploaded job.
-	Parts *[]struct {
-		Etag string `json:"etag"`
-		N    int    `json:"n"`
-	} `json:"parts,omitempty"`
+	Parts *[]CompleteUploadRequestPart `json:"parts,omitempty"`
+}
+
+// CompleteUploadRequestPart defines parameters for CompleteUpload.
+type CompleteUploadRequestPart struct {
+	Etag string `json:"etag"`
+	N    int    `json:"n"`
+}
+
+// HeartbeatUploadResult defines parameters for HeartbeatUpload.
+type HeartbeatUploadResult struct {
+	Ok bool `json:"ok"`
 }
 
 // GetUploadPartUrlsParams defines parameters for GetUploadPartUrls.
 type GetUploadPartUrlsParams struct {
 	// Start The first part number to return a URL for.
 	Start *int `form:"start,omitempty" json:"start,omitempty"`
+}
+
+// GetUploadPartUrlsResult defines parameters for GetUploadPartUrls.
+type GetUploadPartUrlsResult struct {
+	// NextPartNumber The next part number not covered by this page, or null once every part has a URL.
+	NextPartNumber *int `json:"next_part_number"`
+
+	// PartSizeBytes The byte size of every part except the last.
+	PartSizeBytes int `json:"part_size_bytes"`
+
+	// PartUrls Presigned URLs for this page's parts, starting at the requested (or first) part number.
+	PartUrls []PresignedPartUrl `json:"part_urls"`
+
+	// TotalParts The total number of parts this upload is split into.
+	TotalParts int `json:"total_parts"`
+}
+
+// UploadPartResult defines parameters for UploadPart.
+type UploadPartResult struct {
+	Ok   bool `json:"ok"`
+	Part int  `json:"part"`
 }
 
 // CreateAgentAccountSignupJSONRequestBody defines body for CreateAgentAccountSignup for application/json ContentType.
@@ -5449,9 +5524,7 @@ type SetDefaultCardResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		Ok bool `json:"ok"`
-	}
+	JSON200 *SetDefaultCardResult
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *Error
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -5469,9 +5542,7 @@ type SetDefaultCardResponse struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r SetDefaultCardResponse) GetJSON200() *struct {
-	Ok bool `json:"ok"`
-} {
+func (r SetDefaultCardResponse) GetJSON200() *SetDefaultCardResult {
 	return r.JSON200
 }
 
@@ -6456,12 +6527,7 @@ type ScheduleOrgCustodyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		Ok bool `json:"ok"`
-
-		// SwitchAt Unix timestamp when the switch to firm custody takes effect.
-		SwitchAt int `json:"switch_at"`
-	}
+	JSON200 *ScheduleOrgCustodyResult
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *Error
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -6479,12 +6545,7 @@ type ScheduleOrgCustodyResponse struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r ScheduleOrgCustodyResponse) GetJSON200() *struct {
-	Ok bool `json:"ok"`
-
-	// SwitchAt Unix timestamp when the switch to firm custody takes effect.
-	SwitchAt int `json:"switch_at"`
-} {
+func (r ScheduleOrgCustodyResponse) GetJSON200() *ScheduleOrgCustodyResult {
 	return r.JSON200
 }
 
@@ -6957,9 +7018,7 @@ type PatchOrgMemberResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		Ok bool `json:"ok"`
-	}
+	JSON200 *PatchOrgMemberResult
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *Error
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -6981,9 +7040,7 @@ type PatchOrgMemberResponse struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r PatchOrgMemberResponse) GetJSON200() *struct {
-	Ok bool `json:"ok"`
-} {
+func (r PatchOrgMemberResponse) GetJSON200() *PatchOrgMemberResult {
 	return r.JSON200
 }
 
@@ -7148,9 +7205,7 @@ type LiftTranscriptHoldResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		Ok bool `json:"ok"`
-	}
+	JSON200 *LiftTranscriptHoldResult
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *Error
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -7168,9 +7223,7 @@ type LiftTranscriptHoldResponse struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r LiftTranscriptHoldResponse) GetJSON200() *struct {
-	Ok bool `json:"ok"`
-} {
+func (r LiftTranscriptHoldResponse) GetJSON200() *LiftTranscriptHoldResult {
 	return r.JSON200
 }
 
@@ -7242,9 +7295,7 @@ type PlaceTranscriptHoldResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		Ok bool `json:"ok"`
-	}
+	JSON200 *PlaceTranscriptHoldResult
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *Error
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -7262,9 +7313,7 @@ type PlaceTranscriptHoldResponse struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r PlaceTranscriptHoldResponse) GetJSON200() *struct {
-	Ok bool `json:"ok"`
-} {
+func (r PlaceTranscriptHoldResponse) GetJSON200() *PlaceTranscriptHoldResult {
 	return r.JSON200
 }
 
@@ -8035,9 +8084,7 @@ type HeartbeatUploadResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		Ok bool `json:"ok"`
-	}
+	JSON200 *HeartbeatUploadResult
 	// JSON401 the response for an HTTP 401 `application/json` response
 	JSON401 *Error
 	// JSON403 the response for an HTTP 403 `application/json` response
@@ -8053,9 +8100,7 @@ type HeartbeatUploadResponse struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r HeartbeatUploadResponse) GetJSON200() *struct {
-	Ok bool `json:"ok"`
-} {
+func (r HeartbeatUploadResponse) GetJSON200() *HeartbeatUploadResult {
 	return r.JSON200
 }
 
@@ -8122,19 +8167,7 @@ type GetUploadPartUrlsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		// NextPartNumber The next part number not covered by this page, or null once every part has a URL.
-		NextPartNumber *int `json:"next_part_number"`
-
-		// PartSizeBytes The byte size of every part except the last.
-		PartSizeBytes int `json:"part_size_bytes"`
-
-		// PartUrls Presigned URLs for this page's parts, starting at the requested (or first) part number.
-		PartUrls []PresignedPartUrl `json:"part_urls"`
-
-		// TotalParts The total number of parts this upload is split into.
-		TotalParts int `json:"total_parts"`
-	}
+	JSON200 *GetUploadPartUrlsResult
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *Error
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -8154,19 +8187,7 @@ type GetUploadPartUrlsResponse struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r GetUploadPartUrlsResponse) GetJSON200() *struct {
-	// NextPartNumber The next part number not covered by this page, or null once every part has a URL.
-	NextPartNumber *int `json:"next_part_number"`
-
-	// PartSizeBytes The byte size of every part except the last.
-	PartSizeBytes int `json:"part_size_bytes"`
-
-	// PartUrls Presigned URLs for this page's parts, starting at the requested (or first) part number.
-	PartUrls []PresignedPartUrl `json:"part_urls"`
-
-	// TotalParts The total number of parts this upload is split into.
-	TotalParts int `json:"total_parts"`
-} {
+func (r GetUploadPartUrlsResponse) GetJSON200() *GetUploadPartUrlsResult {
 	return r.JSON200
 }
 
@@ -8243,10 +8264,7 @@ type UploadPartResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		Ok   bool `json:"ok"`
-		Part int  `json:"part"`
-	}
+	JSON200 *UploadPartResult
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *Error
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -8268,10 +8286,7 @@ type UploadPartResponse struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r UploadPartResponse) GetJSON200() *struct {
-	Ok   bool `json:"ok"`
-	Part int  `json:"part"`
-} {
+func (r UploadPartResponse) GetJSON200() *UploadPartResult {
 	return r.JSON200
 }
 
@@ -9434,9 +9449,7 @@ func ParseSetDefaultCardResponse(rsp *http.Response) (*SetDefaultCardResponse, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Ok bool `json:"ok"`
-		}
+		var dest SetDefaultCardResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -10331,12 +10344,7 @@ func ParseScheduleOrgCustodyResponse(rsp *http.Response) (*ScheduleOrgCustodyRes
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Ok bool `json:"ok"`
-
-			// SwitchAt Unix timestamp when the switch to firm custody takes effect.
-			SwitchAt int `json:"switch_at"`
-		}
+		var dest ScheduleOrgCustodyResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -10773,9 +10781,7 @@ func ParsePatchOrgMemberResponse(rsp *http.Response) (*PatchOrgMemberResponse, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Ok bool `json:"ok"`
-		}
+		var dest PatchOrgMemberResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -10944,9 +10950,7 @@ func ParseLiftTranscriptHoldResponse(rsp *http.Response) (*LiftTranscriptHoldRes
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Ok bool `json:"ok"`
-		}
+		var dest LiftTranscriptHoldResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -11027,9 +11031,7 @@ func ParsePlaceTranscriptHoldResponse(rsp *http.Response) (*PlaceTranscriptHoldR
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Ok bool `json:"ok"`
-		}
+		var dest PlaceTranscriptHoldResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -11737,9 +11739,7 @@ func ParseHeartbeatUploadResponse(rsp *http.Response) (*HeartbeatUploadResponse,
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Ok bool `json:"ok"`
-		}
+		var dest HeartbeatUploadResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -11813,19 +11813,7 @@ func ParseGetUploadPartUrlsResponse(rsp *http.Response) (*GetUploadPartUrlsRespo
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// NextPartNumber The next part number not covered by this page, or null once every part has a URL.
-			NextPartNumber *int `json:"next_part_number"`
-
-			// PartSizeBytes The byte size of every part except the last.
-			PartSizeBytes int `json:"part_size_bytes"`
-
-			// PartUrls Presigned URLs for this page's parts, starting at the requested (or first) part number.
-			PartUrls []PresignedPartUrl `json:"part_urls"`
-
-			// TotalParts The total number of parts this upload is split into.
-			TotalParts int `json:"total_parts"`
-		}
+		var dest GetUploadPartUrlsResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -11913,10 +11901,7 @@ func ParseUploadPartResponse(rsp *http.Response) (*UploadPartResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Ok   bool `json:"ok"`
-			Part int  `json:"part"`
-		}
+		var dest UploadPartResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

@@ -518,6 +518,11 @@ killed and scored counts and fails only on a timeout or output it cannot read, a
 
 `generated/` is never edited by hand. `scripts/generate.go` also declares any path parameter the
 API document leaves out, in a private copy of the spec (the production spec leaves none out today).
+Every inline object schema with properties gets a path-derived `x-go-type-name` in that copy
+(`Error.details` becomes `ErrorDetails`), so no generated struct is anonymous and a later field is not
+an incompatible change. `just build` runs apidiff against the last tag and fails on any incompatible
+change that `apidiff-accepted.txt` does not list; the file names its tag on the first line and expires at
+the next release.
 
 ### Accepted deviations from the SDK specification
 
