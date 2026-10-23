@@ -71,7 +71,7 @@ const stored = (target = sha, type = 'commit') => ({ref: `refs/tags/${tag}`, obj
 
 test('lint and ci enforce the release regressions in the pinned offline container', () => {
   const recipes = readFileSync(resolve(root, 'justfile'), 'utf8');
-  assert.match(recipes, /node_image := "node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392"/);
+  assert.match(recipes, /node_image := "node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d"/);
   const lint = recipes.split('lint version=floor:')[1].split('\n\n')[0];
   assert.match(lint, /run\(\) \{ docker run .*--network none/);
   assert.match(lint, /run --label codex.adhoc=1 \{\{node_image\}\} timeout 60 node --test scripts\/release-candidate.test.mjs/);
@@ -166,16 +166,16 @@ test('ci runs every runtime test stage while retaining a failed security gate', 
   const body = recipes.split('ci version="":')[1].split('\n\n')[0]
     .split('\n').filter(line => !line.includes('{{'))
     .map(line => line.replace(/^    /, '')).join('\n');
-  const script = `versions="1.25 1.26 1.27"
+  const script = `versions="1.26 1.27"
 just() {
   printf '%s %s\n' "$1" "$2"
-  if [ "$1" = lint ] && [ "$2" = 1.25 ]; then return 3; fi
+  if [ "$1" = lint ] && [ "$2" = 1.26 ]; then return 3; fi
   return 0
 }
 ${body}`;
   const result = spawnSync('bash', ['-c', script], {encoding: 'utf8', timeout: 5000});
   assert.equal(result.error, undefined);
   assert.equal(result.status, 3);
-  assert.deepEqual(result.stdout.trim().split('\n'), ['1.25', '1.26', '1.27'].flatMap(version =>
+  assert.deepEqual(result.stdout.trim().split('\n'), ['1.26', '1.27'].flatMap(version =>
     ['lint', 'test', 'conformance', 'examples', 'build'].map(recipe => `${recipe} ${version}`)));
 });

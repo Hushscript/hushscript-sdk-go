@@ -1,0 +1,25 @@
+v1.0.1
+- ./generated.AgentSignupRequest.Agent: changed from struct{ContactUrl *string "json:\"contact_url,omitempty\""; Name string "json:\"name\""; Platform string "json:\"platform\""} to AgentSignupRequestAgent
+- ./generated.CompleteUploadJSONBody.Parts: changed from *[]struct{Etag string "json:\"etag\""; N int "json:\"n\""} to *[]CompleteUploadRequestPart
+- ./generated.CompleteUploadJSONRequestBody.Parts: changed from *[]struct{Etag string "json:\"etag\""; N int "json:\"n\""} to *[]CompleteUploadRequestPart
+- ./generated.CreateUploadJSONBody.TranscriptionOptions: changed from *struct{AutoGenerateInsights *bool "json:\"auto_generate_insights,omitempty\""; KeytermsPrompt *[]string "json:\"keyterms_prompt,omitempty\""; LanguageCode *string "json:\"language_code,omitempty\""; MedicalMode *bool "json:\"medical_mode,omitempty\""; Multichannel *bool "json:\"multichannel,omitempty\""; Prompt *string "json:\"prompt,omitempty\""; SpeakerDetection *bool "json:\"speaker_detection,omitempty\""; TranslationTargets *[]string "json:\"translation_targets,omitempty\""} to *CreateUploadRequestTranscriptionOptions
+- ./generated.CreateUploadJSONRequestBody.TranscriptionOptions: changed from *struct{AutoGenerateInsights *bool "json:\"auto_generate_insights,omitempty\""; KeytermsPrompt *[]string "json:\"keyterms_prompt,omitempty\""; LanguageCode *string "json:\"language_code,omitempty\""; MedicalMode *bool "json:\"medical_mode,omitempty\""; Multichannel *bool "json:\"multichannel,omitempty\""; Prompt *string "json:\"prompt,omitempty\""; SpeakerDetection *bool "json:\"speaker_detection,omitempty\""; TranslationTargets *[]string "json:\"translation_targets,omitempty\""} to *CreateUploadRequestTranscriptionOptions
+- ./generated.DeletedTranscript.Receipt: changed from *struct{CreatedAt string "json:\"created_at\""; Items []struct{DeletedAt string "json:\"deleted_at\""; Kind string "json:\"kind\""} "json:\"items\""; Type string "json:\"type\""; Version int "json:\"version\""} to *DeletedTranscriptReceipt
+- ./generated.Error.Details: changed from *struct{AllowedPacks *[]string "json:\"allowed_packs,omitempty\""; Limit *int "json:\"limit,omitempty\""; RetryAfterSeconds *int "json:\"retry_after_seconds,omitempty\""; WindowSeconds *int "json:\"window_seconds,omitempty\""} to *ErrorDetails
+- ./generated.GetUploadPartUrlsResponse.GetJSON200: changed from func() *struct{NextPartNumber *int "json:\"next_part_number\""; PartSizeBytes int "json:\"part_size_bytes\""; PartUrls []PresignedPartUrl "json:\"part_urls\""; TotalParts int "json:\"total_parts\""} to func() *GetUploadPartUrlsResult
+- ./generated.GetUploadPartUrlsResponse.JSON200: changed from *struct{NextPartNumber *int "json:\"next_part_number\""; PartSizeBytes int "json:\"part_size_bytes\""; PartUrls []PresignedPartUrl "json:\"part_urls\""; TotalParts int "json:\"total_parts\""} to *GetUploadPartUrlsResult
+- ./generated.HeartbeatUploadResponse.GetJSON200: changed from func() *struct{Ok bool "json:\"ok\""} to func() *HeartbeatUploadResult
+- ./generated.HeartbeatUploadResponse.JSON200: changed from *struct{Ok bool "json:\"ok\""} to *HeartbeatUploadResult
+- ./generated.LiftTranscriptHoldResponse.GetJSON200: changed from func() *struct{Ok bool "json:\"ok\""} to func() *LiftTranscriptHoldResult
+- ./generated.LiftTranscriptHoldResponse.JSON200: changed from *struct{Ok bool "json:\"ok\""} to *LiftTranscriptHoldResult
+- ./generated.PatchOrgMemberResponse.GetJSON200: changed from func() *struct{Ok bool "json:\"ok\""} to func() *PatchOrgMemberResult
+- ./generated.PatchOrgMemberResponse.JSON200: changed from *struct{Ok bool "json:\"ok\""} to *PatchOrgMemberResult
+- ./generated.PlaceTranscriptHoldResponse.GetJSON200: changed from func() *struct{Ok bool "json:\"ok\""} to func() *PlaceTranscriptHoldResult
+- ./generated.PlaceTranscriptHoldResponse.JSON200: changed from *struct{Ok bool "json:\"ok\""} to *PlaceTranscriptHoldResult
+- ./generated.ScheduleOrgCustodyResponse.GetJSON200: changed from func() *struct{Ok bool "json:\"ok\""; SwitchAt int "json:\"switch_at\""} to func() *ScheduleOrgCustodyResult
+- ./generated.ScheduleOrgCustodyResponse.JSON200: changed from *struct{Ok bool "json:\"ok\""; SwitchAt int "json:\"switch_at\""} to *ScheduleOrgCustodyResult
+- ./generated.SetDefaultCardResponse.GetJSON200: changed from func() *struct{Ok bool "json:\"ok\""} to func() *SetDefaultCardResult
+- ./generated.SetDefaultCardResponse.JSON200: changed from *struct{Ok bool "json:\"ok\""} to *SetDefaultCardResult
+- ./generated.UploadCreateResponse.Upload: changed from *struct{NextPartNumber *int "json:\"next_part_number\""; PartSizeBytes int "json:\"part_size_bytes\""; PartUrls []PresignedPartUrl "json:\"part_urls\""; TotalParts int "json:\"total_parts\""} to *UploadCreateResponseUpload
+- ./generated.UploadPartResponse.GetJSON200: changed from func() *struct{Ok bool "json:\"ok\""; Part int "json:\"part\""} to func() *UploadPartResult
+- ./generated.UploadPartResponse.JSON200: changed from *struct{Ok bool "json:\"ok\""; Part int "json:\"part\""} to *UploadPartResult

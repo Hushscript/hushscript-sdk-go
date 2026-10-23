@@ -367,12 +367,7 @@ func TestUploadPlanAndPageBoundaries(t *testing.T) {
 		{(32 << 20) + 1, 1, true},
 	} {
 		plan, failure := c.core.planOf(&createdUpload{UploadCreateResponse: &generated.UploadCreateResponse{
-			Upload: &struct {
-				NextPartNumber *int                         `json:"next_part_number"`
-				PartSizeBytes  int                          `json:"part_size_bytes"`
-				PartUrls       []generated.PresignedPartUrl `json:"part_urls"`
-				TotalParts     int                          `json:"total_parts"`
-			}{PartSizeBytes: tc.size, TotalParts: tc.total},
+			Upload: &generated.UploadCreateResponseUpload{PartSizeBytes: tc.size, TotalParts: tc.total},
 		}}, http.StatusCreated)
 		if (failure != nil) != tc.bad {
 			t.Fatalf("size=%d total=%d plan=%+v error=%v", tc.size, tc.total, plan, failure)

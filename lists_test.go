@@ -150,7 +150,10 @@ func TestStoppingTheLoopSendsNoFurtherRequest(t *testing.T) {
 		t.Errorf("%d requests after breaking out in the first page, want 1", api.requests())
 	}
 	// breaking at the last row of a page must not fetch the next one either
-	for range api.client(t).Transcripts.List(context.Background(), nil) {
+	for _, err := range api.client(t).Transcripts.List(context.Background(), nil) {
+		if err != nil {
+			t.Fatal(err)
+		}
 		n++
 		if n == 5 {
 			break

@@ -73,6 +73,11 @@ func run(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+	named, err := gen.NameInlineObjects(spec)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "generate: named %d inline object schemas\n", len(named))
 	patched, changed, err := gen.PatchPathParameters(spec)
 	if err != nil {
 		return err
