@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Hushscript/hushscript-sdk-go/compare/v1.1.0...v1.1.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **deps:** update dependencies to latest ([9a67b7b](https://github.com/Hushscript/hushscript-sdk-go/commit/9a67b7bfc5012f483dd442418743b18156793b7f))
+
 ## [1.1.0](https://github.com/Hushscript/hushscript-sdk-go/compare/v1.0.1...v1.1.0) (2026-10-23)
 
 
