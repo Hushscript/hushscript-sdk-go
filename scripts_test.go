@@ -593,7 +593,7 @@ func TestMutationSumFailsLoudlyOnAMissingOrBrokenShard(t *testing.T) {
 	})
 }
 
-func TestMutationFloorIsStoredOnceAndTheNightlyMatrixCoversEveryFile(t *testing.T) {
+func TestMutationFloorIsStoredOnceAndThePromotionMatrixCoversEveryFile(t *testing.T) {
 	read := func(name string) string {
 		t.Helper()
 		raw, err := os.ReadFile(name) //nolint:gosec // fixed repository paths
@@ -602,7 +602,7 @@ func TestMutationFloorIsStoredOnceAndTheNightlyMatrixCoversEveryFile(t *testing.
 		}
 		return string(raw)
 	}
-	justfile, compose, nightly, script := read("justfile"), read("compose.yaml"), read(".github/workflows/nightly.yml"), read("scripts/mutation.sh")
+	justfile, compose, promotion, script := read("justfile"), read("compose.yaml"), read(".github/workflows/promotion.yml"), read("scripts/mutation.sh")
 	if strings.Count(justfile, "mutation_floor :=") != 1 {
 		t.Error("the justfile must define mutation_floor once")
 	}
@@ -614,19 +614,19 @@ func TestMutationFloorIsStoredOnceAndTheNightlyMatrixCoversEveryFile(t *testing.
 	if strings.Contains(mutation, "mutation.sh") || regexp.MustCompile(`\b75\b`).MatchString(mutation) {
 		t.Errorf("the compose mutation service must not carry a command or a floor:\n%s", mutation)
 	}
-	if regexp.MustCompile(`\b75\b`).MatchString(nightly) {
-		t.Error("the nightly workflow must not carry the floor")
+	if regexp.MustCompile(`\b75\b`).MatchString(promotion) {
+		t.Error("the promotion workflow must not carry the floor")
 	}
 	declared := regexp.MustCompile(`(?m)^known=\((.*)\)$`).FindStringSubmatch(script)
 	if declared == nil {
 		t.Fatal("mutation.sh declares no known files")
 	}
 	var matrix []string
-	for _, match := range regexp.MustCompile(`\{file: ([a-z]+\.go),`).FindAllStringSubmatch(nightly, -1) {
+	for _, match := range regexp.MustCompile(`\{file: ([a-z]+\.go),`).FindAllStringSubmatch(promotion, -1) {
 		matrix = append(matrix, match[1])
 	}
 	if got, want := strings.Join(matrix, " "), declared[1]; got != want {
-		t.Errorf("the nightly matrix runs %q, mutation.sh knows %q", got, want)
+		t.Errorf("the promotion matrix runs %q, mutation.sh knows %q", got, want)
 	}
 	if got := strings.Join(shardNames, " "); got != declared[1] {
 		t.Errorf("shardNames = %q, mutation.sh knows %q", got, declared[1])

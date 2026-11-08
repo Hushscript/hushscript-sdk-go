@@ -3,7 +3,7 @@
 # copy of the tree. MUTATION_TIMEOUT (seconds, default 21600) bounds one run.
 #   mutation.sh FLOOR [FILE...]        mutate the files (all of them without any: a long local run), fail below FLOOR percent
 #   mutation.sh --counts OUT FILE      mutate one file and write its killed and scored counts to OUT; fails only on
-#                                      a failing baseline, timeout or output it cannot read, whatever the score (a nightly shard)
+#                                      a failing baseline, timeout or output it cannot read, whatever the score (a promotion-PR shard)
 #   mutation.sh --sum FLOOR COUNTS...  add up the counts of every file (one <file>.counts each) and fail below FLOOR
 #                                      percent; a missing, extra or malformed counts file fails by name
 set -euo pipefail

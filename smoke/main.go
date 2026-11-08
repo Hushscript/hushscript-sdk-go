@@ -1,4 +1,4 @@
-// Command smoke is the nightly production check: it reads the account of the token in
+// Command smoke is the production check on the promotion PR: it reads the account of the token in
 // HUSHSCRIPT_TOKEN through the SDK. It needs outbound network and runs only through `just smoke`.
 package main
 
