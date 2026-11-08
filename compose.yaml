@@ -67,7 +67,7 @@ services:
         timeout 1800 go test -p 4 -race -shuffle=on -count=1 -coverprofile=/tmp/cover.out -coverpkg=./... ./...
         && scripts/coverage.sh /tmp/cover.out 85
 
-  # go-mutesting on selected source files (nightly). It rewrites sources in place, so it works on a copy.
+  # go-mutesting on selected source files (promotion PR). It rewrites sources in place, so it works on a copy.
   # The justfile supplies the command, and with it the floor, which lives only there.
   mutation:
     <<: *sandboxed
@@ -78,7 +78,7 @@ services:
       CONFORMANCE_DIR: /conformance
       MUTATION_TIMEOUT: ${MUTATION_TIMEOUT:-21600}
 
-  # Native fuzz targets, one at a time (nightly).
+  # Native fuzz targets, one at a time (promotion PR).
   fuzz:
     <<: *sandboxed
     environment:
@@ -140,7 +140,7 @@ services:
       - ./generated:/work/generated
     command: ["timeout", "600", "go", "run", "./scripts"]
 
-  # Outbound network: the one test that talks to production. Nightly only.
+  # Outbound network: the one test that talks to production. Promotion PR only.
   smoke:
     <<: *dev
     tmpfs: *scratch

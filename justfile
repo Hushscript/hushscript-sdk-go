@@ -50,7 +50,7 @@ mutation version=floor *files:
     shift
     docker compose run --rm mutation scripts/mutation.sh {{mutation_floor}} "$@"
 
-# nightly shard: go-mutesting on one source file, its killed and scored counts written to <counts_dir>/<file>.counts on the host; fails only on a timeout or output it cannot read, the floor is enforced on the total by mutation-sum
+# promotion-PR shard: go-mutesting on one source file, its killed and scored counts written to <counts_dir>/<file>.counts on the host; fails only on a timeout or output it cannot read, the floor is enforced on the total by mutation-sum
 mutation-shard file counts_dir version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -65,13 +65,13 @@ mutation-shard file counts_dir version=floor:
     # The container's root is read-only; the counts directory is its one writable mount, owned by the caller.
     docker compose run --rm --user "$(id -u):$(id -g)" -v "$counts":/counts mutation scripts/mutation.sh --counts "/counts/{{file}}.counts" "{{file}}"
 
-# add up the counts of every nightly shard in counts_dir (plain bash and awk, no container) and enforce the floor on the total
+# add up the counts of every promotion-PR shard in counts_dir (plain bash and awk, no container) and enforce the floor on the total
 mutation-sum counts_dir:
     #!/usr/bin/env bash
     set -euo pipefail
     scripts/mutation.sh --sum {{mutation_floor}} "{{counts_dir}}"/*.counts
 
-# native fuzz targets, FUZZ_TIME each (default 60s; nightly)
+# native fuzz targets, FUZZ_TIME each (default 60s; promotion PR)
 fuzz version=floor:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -195,7 +195,7 @@ ci version="":
     done
     exit "$status"
 
-# nightly smoke against production; needs SMOKE_TOKEN (outbound network)
+# production smoke (promotion PR); needs SMOKE_TOKEN (outbound network)
 smoke:
     #!/usr/bin/env bash
     set -euo pipefail

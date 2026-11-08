@@ -1,19 +1,20 @@
-name: nightly
+name: promotion
 
 on:
-  schedule:
-    - cron: "37 2 * * *"
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions: {}
 
 concurrency:
-  group: nightly
+  group: promotion-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   mutation:
     name: mutation (${{ matrix.file }})
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'develop'
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ matrix.job_minutes }}
     strategy:
@@ -72,6 +73,7 @@ jobs:
 
   mutation-total:
     name: mutation (total)
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'develop'
     needs: mutation
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -109,6 +111,7 @@ jobs:
 
   fuzz:
     name: fuzz targets
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'develop'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -143,7 +146,7 @@ jobs:
 
   smoke:
     name: smoke (production)
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'develop'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: smoke
