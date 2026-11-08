@@ -511,7 +511,7 @@ conformance fixtures (`fixtures/hint-rendering.json`) and fail without them: `ju
 a fetch of the pinned ref (`scripts/conformance-dir.sh`).
 
 `just mutation` runs go-mutesting on the HTTP core and transcribe pipeline against the floor in the justfile
-(`mutation_floor`). The nightly workflow runs one `just mutation-shard` job per source file; each writes its
+(`mutation_floor`). The promotion workflow runs one `just mutation-shard` job per source file; each writes its
 killed and scored counts and fails only on a timeout or output it cannot read, and a final job runs
 `just mutation-sum` to enforce the floor on the total of all eight files.
 
