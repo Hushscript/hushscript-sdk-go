@@ -55,9 +55,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Install just
-        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
-          just-version: 1.59.0
+          tool: just@1.59.0
       - name: Run mutation tests
         env:
           MUTATION_FILE: ${{ matrix.file }}
@@ -97,9 +97,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Install just
-        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
-          just-version: 1.59.0
+          tool: just@1.59.0
       - name: Download the shard counts
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -138,9 +138,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Install just
-        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
-          just-version: 1.59.0
+          tool: just@1.59.0
       - name: Run the fuzz targets
         run: just fuzz
 
@@ -175,9 +175,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Install just
-        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
-          just-version: 1.59.0
+          tool: just@1.59.0
       - name: Run the production smoke test
         env:
           SMOKE_TOKEN: ${{ secrets.SMOKE_TOKEN }}
