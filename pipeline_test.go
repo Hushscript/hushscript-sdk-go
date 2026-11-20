@@ -1864,6 +1864,7 @@ func TestContextLimitsAreTheBackendConstants(t *testing.T) {
 		"maxKeytermWords": {maxKeytermWords, 6},
 		"maxKeytermChars": {maxKeytermChars, 128},
 		"maxPromptChars":  {maxPromptChars, 2000},
+		"maxKeytermTotal": {maxKeytermTotal, 1000},
 	} {
 		if got[0] != got[1] {
 			t.Errorf("%s = %d, want the backend's %d", name, got[0], got[1])
@@ -1871,36 +1872,31 @@ func TestContextLimitsAreTheBackendConstants(t *testing.T) {
 	}
 }
 
-func TestCompiledPromptOverheadIsTheBackendConstant(t *testing.T) {
-	if compiledPromptOverhead != 203 {
-		t.Errorf("overhead = %d, want the backend's 203", compiledPromptOverhead)
+func TestKeytermTotalWordCap(t *testing.T) {
+	// 166 distinct six-word terms are 996 words; one more word of a single term lands on 1000.
+	many := func(n int) []string {
+		terms := make([]string, n)
+		for i := range terms {
+			terms[i] = fmt.Sprintf("t%d b c d e f", i)
+		}
+		return terms
 	}
-	if got := compiledPromptChars("p", []string{"ab"}); got != 203+1+4 {
-		t.Errorf("one term = %d", got)
-	}
-	if got := compiledPromptChars("p", []string{"ab", "c"}); got != 203+1+4+3+1 {
-		t.Errorf("two terms = %d", got)
-	}
-}
-
-func TestPromptWithKeytermsIsCappedAsTheCompiledProviderPrompt(t *testing.T) {
-	terms := []string{"alpha", "bétà", "😀😀"}
-	room := maxPromptChars - compiledPromptChars("", terms)
 	for name, tc := range map[string]struct {
-		prompt string
-		ok     bool
+		terms []string
+		ok    bool
+		words int
 	}{
-		"compiled length at the cap":   {prompt: strings.Repeat("p", room), ok: true},
-		"compiled length one over":     {prompt: strings.Repeat("p", room+1)},
-		"multibyte prompt at the cap":  {prompt: strings.Repeat("é", room), ok: true},
-		"multibyte prompt one over":    {prompt: strings.Repeat("é", room+1)},
-		"padding is trimmed first":     {prompt: " " + strings.Repeat("p", room) + "\n", ok: true},
-		"the bare prompt cap is moot":  {prompt: strings.Repeat("p", maxPromptChars)},
-		"a short prompt always passes": {prompt: "p", ok: true},
+		"1000 words":              {terms: append(many(166), "x y z w"), ok: true},
+		"1001 words":              {terms: append(many(166), "x y z w v"), words: 1001},
+		"1000 one-word terms":     {terms: uniqueTerms(maxKeyterms), ok: true},
+		"duplicates count once":   {terms: append(append(many(166), "x y z w"), " x y z w ", "x y z w"), ok: true},
+		"blanks do not count":     {terms: append(append(many(166), "x y z w"), "", " "), ok: true},
+		"whitespace runs are one": {terms: append(many(166), "x \t\n y\u3000z  w"), ok: true},
+		"words, not characters":   {terms: []string{strings.Repeat("a", maxKeytermChars)}, ok: true},
 	} {
 		t.Run(name, func(t *testing.T) {
 			r := newRig(t)
-			_, err := r.transcribe(&TranscribeOptions{Keyterms: terms, Prompt: tc.prompt})
+			_, err := r.transcribe(&TranscribeOptions{Keyterms: tc.terms})
 			if tc.ok {
 				if err != nil {
 					t.Fatalf("err = %v", err)
@@ -1908,8 +1904,7 @@ func TestPromptWithKeytermsIsCappedAsTheCompiledProviderPrompt(t *testing.T) {
 				return
 			}
 			e := wantCode(t, err, KindPreflight, "invalid_option")
-			want := fmt.Sprintf("Prompt and Keyterms together exceed 2000 characters (%d).", compiledPromptChars(strings.TrimSpace(tc.prompt), terms))
-			if e.Message != want {
+			if want := fmt.Sprintf("Keyterms take at most 1000 words in total (%d).", tc.words); e.Message != want {
 				t.Errorf("message = %q, want %q", e.Message, want)
 			}
 			if n := r.api.total(); n != 0 {
@@ -1919,11 +1914,19 @@ func TestPromptWithKeytermsIsCappedAsTheCompiledProviderPrompt(t *testing.T) {
 	}
 }
 
-func TestPromptAloneIsNotCappedByTheCompiledOverheadAndKeytermsAloneByNoPrompt(t *testing.T) {
+func TestPromptIsCappedAloneAndKeytermsDoNotCountAgainstIt(t *testing.T) {
 	r := newRig(t)
 	mustTranscribe(t, r, &TranscribeOptions{Prompt: strings.Repeat("p", maxPromptChars)})
 	r = newRig(t)
 	mustTranscribe(t, r, &TranscribeOptions{Keyterms: uniqueTerms(maxKeyterms)})
+	r = newRig(t)
+	mustTranscribe(t, r, &TranscribeOptions{Keyterms: uniqueTerms(maxKeyterms), Prompt: strings.Repeat("p", maxPromptChars)})
+	r = newRig(t)
+	_, err := r.transcribe(&TranscribeOptions{Keyterms: []string{"alpha"}, Prompt: strings.Repeat("p", maxPromptChars+1)})
+	e := wantCode(t, err, KindPreflight, "invalid_option")
+	if e.Message != "Prompt is longer than 2000 characters." {
+		t.Errorf("message = %q", e.Message)
+	}
 }
 
 func languageRefusal(option, language string) string {

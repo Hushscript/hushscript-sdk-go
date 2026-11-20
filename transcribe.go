@@ -26,19 +26,11 @@ const (
 	maxKeyterms        = 1000
 	maxKeytermWords    = 6
 	maxKeytermChars    = 128
+	maxKeytermTotal    = 1000
 	maxPromptChars     = 2000
 	maxMatterCodeChars = 64
 	minKeyLength       = 16
 	maxKeyLength       = 128
-)
-
-// The backend compiles a prompt and key terms into one provider prompt out of these fixed ASCII
-// pieces (compile_transcription_context in the backend), and the prompt cap applies to the result.
-const (
-	compiledPromptPrefix       = "Transcription context:\n\nBehavior:\n"
-	compiledPromptVocabulary   = "\n\nVocabulary:\n"
-	compiledPromptInstructions = "\n\nInstructions:\n- Prefer exact spellings when the audio supports them.\n- Do not insert terms that are not audible.\n- Preserve speaker turns and timestamps."
-	compiledPromptOverhead     = len(compiledPromptPrefix) + len(compiledPromptVocabulary) + len(compiledPromptInstructions)
 )
 
 func formatInt(v int64) string { return strconv.FormatInt(v, 10) }
@@ -208,17 +200,6 @@ func normalizeContext(opts *TranscribeOptions) contextOptions {
 	return out
 }
 
-// compiledPromptChars is the length in code points of the provider prompt the backend builds from a
-// prompt and key terms: the fixed pieces, the prompt, each term wrapped in two characters, and a
-// separator between terms.
-func compiledPromptChars(prompt string, terms []string) int {
-	total := compiledPromptOverhead + utf8.RuneCountInString(prompt) + len(terms) - 1
-	for _, term := range terms {
-		total += utf8.RuneCountInString(term) + 2
-	}
-	return total
-}
-
 // checkContextLanguage refuses key terms or a prompt in a language the API does not apply them in. The
 // language is trimmed and lowercased first, as the backend does; auto-detect and a code in neither list
 // pass.
@@ -259,17 +240,15 @@ func checkContext(red redactor, opts *TranscribeOptions) error {
 	if len(normalized.terms) > maxKeyterms {
 		return invalidOption(red, "Keyterms takes at most 1000 unique terms.", nil)
 	}
-	if normalized.prompt == "" {
-		return nil
+	words := 0
+	for _, term := range normalized.terms {
+		words += len(strings.FieldsFunc(term, isContextSpace))
 	}
-	if len(normalized.terms) == 0 {
-		if utf8.RuneCountInString(normalized.prompt) > maxPromptChars {
-			return invalidOption(red, "Prompt is longer than 2000 characters.", nil)
-		}
-		return nil
+	if words > maxKeytermTotal {
+		return invalidOption(red, "Keyterms take at most 1000 words in total ("+strconv.Itoa(words)+").", nil)
 	}
-	if total := compiledPromptChars(normalized.prompt, normalized.terms); total > maxPromptChars {
-		return invalidOption(red, "Prompt and Keyterms together exceed 2000 characters ("+strconv.Itoa(total)+").", nil)
+	if utf8.RuneCountInString(normalized.prompt) > maxPromptChars {
+		return invalidOption(red, "Prompt is longer than 2000 characters.", nil)
 	}
 	return nil
 }
