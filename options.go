@@ -64,8 +64,15 @@ type TranscribeOptions struct {
 	// invalid_option error, raised before any request. Saved dictionaries and prompt presets are
 	// merged server-side and are not counted here; the server answers 422 for them.
 	Prompt string
-	// Medical transcribes as a medical dictation (billed double); Language must be en, es, fr or de.
+	// Medical transcribes as a medical dictation (billed double); Language must be en, en_au, en_uk, en_us,
+	// es, fr, de or de_ch. Cannot be combined with Vet.
 	Medical bool
+	// Vet transcribes as a veterinary dictation (billed double, like Medical); Language must be en, en_au,
+	// en_uk, en_us, es, fr, de or de_ch. Cannot be combined with Medical.
+	Vet bool
+	// KeepDisfluencies keeps filler words in the transcript and, on languages that support it, repetitions,
+	// stutters and false starts. Free.
+	KeepDisfluencies bool
 	// Multichannel transcribes each audio channel on its own and bills per channel, up to 8.
 	Multichannel bool
 	// AutoInsights overrides the account's automatic-Insights default; nil inherits it.

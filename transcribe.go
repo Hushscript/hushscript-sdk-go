@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -126,13 +127,21 @@ func checkKey(red redactor, key string) error {
 	return nil
 }
 
+// medicalLanguages mirrors the backend's MEDICAL_LANGUAGES, compared exactly.
+var medicalLanguages = []string{"en", "en_au", "en_uk", "en_us", "es", "fr", "de", "de_ch"}
+
+// vetLanguages mirrors the backend's VET_LANGUAGES, compared exactly.
+var vetLanguages = []string{"en", "en_au", "en_uk", "en_us", "es", "fr", "de", "de_ch"}
+
 func checkOptions(red redactor, opts *TranscribeOptions) error {
-	if opts.Medical {
-		switch opts.Language {
-		case "en", "es", "fr", "de":
-		default:
-			return invalidOption(red, "Medical needs Language to be one of en, es, fr or de.", nil)
-		}
+	if opts.Medical && opts.Vet {
+		return invalidOption(red, "Medical and Vet cannot be combined.", nil)
+	}
+	if opts.Medical && !slices.Contains(medicalLanguages, opts.Language) {
+		return invalidOption(red, "Medical needs Language to be one of en, en_au, en_uk, en_us, es, fr, de or de_ch.", nil)
+	}
+	if opts.Vet && !slices.Contains(vetLanguages, opts.Language) {
+		return invalidOption(red, "Vet needs Language to be one of en, en_au, en_uk, en_us, es, fr, de or de_ch.", nil)
 	}
 	if err := checkContext(red, opts); err != nil {
 		return err
@@ -357,6 +366,8 @@ type transcriptionOptions struct {
 	KeytermsPrompt       []string `json:"keyterms_prompt,omitempty"`
 	Prompt               string   `json:"prompt,omitempty"`
 	MedicalMode          bool     `json:"medical_mode,omitempty"`
+	VetMode              bool     `json:"vet_mode,omitempty"`
+	KeepDisfluencies     bool     `json:"keep_disfluencies,omitempty"`
 	Multichannel         bool     `json:"multichannel,omitempty"`
 	AutoGenerateInsights *bool    `json:"auto_generate_insights,omitempty"`
 }
@@ -366,7 +377,7 @@ func bodyFrom(opts *TranscribeOptions, size int64, declared int, key string) cre
 	normalized := normalizeContext(opts)
 	options := transcriptionOptions{
 		LanguageCode: opts.Language, SpeakerDetection: opts.Speakers, TranslationTargets: opts.TranslateTo,
-		KeytermsPrompt: normalized.terms, Prompt: normalized.prompt, MedicalMode: opts.Medical, Multichannel: opts.Multichannel,
+		KeytermsPrompt: normalized.terms, Prompt: normalized.prompt, MedicalMode: opts.Medical, VetMode: opts.Vet, KeepDisfluencies: opts.KeepDisfluencies, Multichannel: opts.Multichannel,
 		AutoGenerateInsights: opts.AutoInsights,
 	}
 	// Every field is omitempty, so the options encode to {} exactly when the caller set none of them.

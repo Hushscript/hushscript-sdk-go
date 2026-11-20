@@ -16,6 +16,8 @@ type JobOptions struct {
 	LanguageCode       string
 	SpeakerDetection   bool
 	MedicalMode        bool
+	VetMode            bool
+	KeepDisfluencies   bool
 	Multichannel       bool
 	TranslationTargets []string
 	// Keyterms and Prompt say whether they were set.
@@ -74,6 +76,8 @@ type jobOptionsBody struct {
 	LanguageCode         *string  `json:"language_code"`
 	SpeakerDetection     bool     `json:"speaker_detection"`
 	MedicalMode          bool     `json:"medical_mode"`
+	VetMode              bool     `json:"vet_mode"`
+	KeepDisfluencies     bool     `json:"keep_disfluencies"`
 	Multichannel         bool     `json:"multichannel"`
 	TranslationTargets   []string `json:"translation_targets"`
 	Keyterms             bool     `json:"keyterms"`
@@ -101,6 +105,7 @@ func (b jobBody) job(raw json.RawMessage) *Job {
 		BillableSeconds: b.BillableSeconds, RetryOf: valueOf(b.RetryOf), Raw: raw,
 		Options: JobOptions{
 			LanguageCode: valueOf(b.Options.LanguageCode), SpeakerDetection: b.Options.SpeakerDetection, MedicalMode: b.Options.MedicalMode,
+			VetMode: b.Options.VetMode, KeepDisfluencies: b.Options.KeepDisfluencies,
 			Multichannel: b.Options.Multichannel, TranslationTargets: b.Options.TranslationTargets, Keyterms: b.Options.Keyterms,
 			Prompt: b.Options.Prompt, AutoGenerateInsights: b.Options.AutoGenerateInsights, Raw: b.Options.raw,
 		},
