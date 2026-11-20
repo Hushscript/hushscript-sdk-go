@@ -362,7 +362,8 @@ func (b BillingService) Transactions(ctx context.Context) iter.Seq2[Transaction,
 			return Page[Transaction]{}, core.badResponse(route, response.StatusCode())
 		}
 		page := Page[Transaction]{NextCursor: cursor, Items: make([]Transaction, len(rows))}
-		for i, row := range rows {
+		for i := range rows {
+			row := &rows[i]
 			page.Items[i] = Transaction{
 				ID: row.Id, Seconds: row.Seconds, AmountCents: row.AmountCents, AmountRefundedCents: row.AmountRefundedCents,
 				Currency: row.Currency, Status: row.Status, CreatedAt: unixTime(int64(row.CreatedAt)),
