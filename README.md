@@ -91,9 +91,13 @@ prompt means the option is off and nothing is sent. The limits, checked before a
 
 - at most 1000 `Keyterms`;
 - each term at most 6 words and at most 128 characters (code points);
-- `Prompt` at most 2000 characters (code points);
-- with both set, the 2000 applies to the compiled prompt the backend builds:
-  `203 + len(prompt) + sum(len(term) + 2) + (terms - 1)`.
+- at most 1000 words in total across all `Keyterms`;
+- `Prompt` at most 2000 characters (code points), on its own.
+
+The two are sent separately, so `Prompt` is not counted with the key terms. The server also checks a
+token budget for both together; the SDK does not estimate it, and the server answers 422 when it is
+exceeded. Languages that the universal-2 model serves (most languages outside the supported list) refuse
+`Keyterms` and `Prompt` with `invalid_option`; the message lists the languages that accept them.
 
 Saved dictionaries and prompt presets are merged on the server, so the SDK cannot count them. The
 server stays the authority and answers 422 `invalid_transcription_options` without saying which limit failed.

@@ -53,16 +53,19 @@ type TranscribeOptions struct {
 	TranslateTo []string
 	// Keyterms biases transcription toward domain vocabulary. Each term is trimmed (Unicode white
 	// space), blank terms are dropped and repeated terms count once. At most 1000 terms remain, each
-	// at most 6 words (runs of white space separate words) and at most 128 characters (code points).
-	// No terms left means the option is off and nothing is sent. A violation is an invalid_option
-	// error naming the term's index, raised before any request.
+	// at most 6 words (runs of white space separate words) and at most 128 characters (code points),
+	// and at most 1000 words in total across all terms. No terms left means the option is off and
+	// nothing is sent. A violation is an invalid_option error, raised before any request. Keyterms are
+	// sent separately from Prompt. The server also checks a token budget for both, which the SDK does
+	// not estimate, and answers 422 when it is exceeded. Languages that the universal-2 model serves
+	// refuse Keyterms and Prompt with invalid_option.
 	Keyterms []string
 	// Prompt is free-text context, trimmed (Unicode white space) and sent only when something is left.
-	// It is at most 2000 characters (code points). With Keyterms the backend compiles both into one
-	// provider prompt, and the 2000 applies to that compiled text: 203 characters of fixed wording,
-	// the prompt, each term plus 2, and one more per term after the first. A violation is an
-	// invalid_option error, raised before any request. Saved dictionaries and prompt presets are
-	// merged server-side and are not counted here; the server answers 422 for them.
+	// It is sent separately from Keyterms and is at most 2000 characters (code points) on its own. A
+	// violation is an invalid_option error, raised before any request. Saved dictionaries and prompt
+	// presets are merged server-side and are not counted here; the server answers 422 for them, and
+	// checks the token budget of Keyterms and Prompt together. Languages that the universal-2 model
+	// serves refuse Prompt with invalid_option.
 	Prompt string
 	// Medical transcribes as a medical dictation (billed double); Language must be en, en_au, en_uk, en_us,
 	// es, fr, de or de_ch. Cannot be combined with Vet.

@@ -3,5 +3,8 @@ extend-exclude = ["openapi.json", "go.mod", "go.sum", "generated/**", "LICENSE",
 
 [default.extend-words]
 JOD = "JOD"
+# Language codes (Bashkir, Faroese) in the language lists in transcribe.go
+ba = "ba"
+fo = "fo"
 # go-mutesting prints "UNKOWN exit code for"; the mutation gate matches it verbatim
 unkown = "unkown"

@@ -1864,6 +1864,7 @@ func TestContextLimitsAreTheBackendConstants(t *testing.T) {
 		"maxKeytermWords": {maxKeytermWords, 6},
 		"maxKeytermChars": {maxKeytermChars, 128},
 		"maxPromptChars":  {maxPromptChars, 2000},
+		"maxKeytermTotal": {maxKeytermTotal, 1000},
 	} {
 		if got[0] != got[1] {
 			t.Errorf("%s = %d, want the backend's %d", name, got[0], got[1])
@@ -1871,36 +1872,31 @@ func TestContextLimitsAreTheBackendConstants(t *testing.T) {
 	}
 }
 
-func TestCompiledPromptOverheadIsTheBackendConstant(t *testing.T) {
-	if compiledPromptOverhead != 203 {
-		t.Errorf("overhead = %d, want the backend's 203", compiledPromptOverhead)
+func TestKeytermTotalWordCap(t *testing.T) {
+	// 166 distinct six-word terms are 996 words; one more word of a single term lands on 1000.
+	many := func(n int) []string {
+		terms := make([]string, n)
+		for i := range terms {
+			terms[i] = fmt.Sprintf("t%d b c d e f", i)
+		}
+		return terms
 	}
-	if got := compiledPromptChars("p", []string{"ab"}); got != 203+1+4 {
-		t.Errorf("one term = %d", got)
-	}
-	if got := compiledPromptChars("p", []string{"ab", "c"}); got != 203+1+4+3+1 {
-		t.Errorf("two terms = %d", got)
-	}
-}
-
-func TestPromptWithKeytermsIsCappedAsTheCompiledProviderPrompt(t *testing.T) {
-	terms := []string{"alpha", "bétà", "😀😀"}
-	room := maxPromptChars - compiledPromptChars("", terms)
 	for name, tc := range map[string]struct {
-		prompt string
-		ok     bool
+		terms []string
+		ok    bool
+		words int
 	}{
-		"compiled length at the cap":   {prompt: strings.Repeat("p", room), ok: true},
-		"compiled length one over":     {prompt: strings.Repeat("p", room+1)},
-		"multibyte prompt at the cap":  {prompt: strings.Repeat("é", room), ok: true},
-		"multibyte prompt one over":    {prompt: strings.Repeat("é", room+1)},
-		"padding is trimmed first":     {prompt: " " + strings.Repeat("p", room) + "\n", ok: true},
-		"the bare prompt cap is moot":  {prompt: strings.Repeat("p", maxPromptChars)},
-		"a short prompt always passes": {prompt: "p", ok: true},
+		"1000 words":              {terms: append(many(166), "x y z w"), ok: true},
+		"1001 words":              {terms: append(many(166), "x y z w v"), words: 1001},
+		"1000 one-word terms":     {terms: uniqueTerms(maxKeyterms), ok: true},
+		"duplicates count once":   {terms: append(append(many(166), "x y z w"), " x y z w ", "x y z w"), ok: true},
+		"blanks do not count":     {terms: append(append(many(166), "x y z w"), "", " "), ok: true},
+		"whitespace runs are one": {terms: append(many(166), "x \t\n y\u3000z  w"), ok: true},
+		"words, not characters":   {terms: []string{strings.Repeat("a", maxKeytermChars)}, ok: true},
 	} {
 		t.Run(name, func(t *testing.T) {
 			r := newRig(t)
-			_, err := r.transcribe(&TranscribeOptions{Keyterms: terms, Prompt: tc.prompt})
+			_, err := r.transcribe(&TranscribeOptions{Keyterms: tc.terms})
 			if tc.ok {
 				if err != nil {
 					t.Fatalf("err = %v", err)
@@ -1908,8 +1904,7 @@ func TestPromptWithKeytermsIsCappedAsTheCompiledProviderPrompt(t *testing.T) {
 				return
 			}
 			e := wantCode(t, err, KindPreflight, "invalid_option")
-			want := fmt.Sprintf("Prompt and Keyterms together exceed 2000 characters (%d).", compiledPromptChars(strings.TrimSpace(tc.prompt), terms))
-			if e.Message != want {
+			if want := fmt.Sprintf("Keyterms take at most 1000 words in total (%d).", tc.words); e.Message != want {
 				t.Errorf("message = %q, want %q", e.Message, want)
 			}
 			if n := r.api.total(); n != 0 {
@@ -1919,11 +1914,110 @@ func TestPromptWithKeytermsIsCappedAsTheCompiledProviderPrompt(t *testing.T) {
 	}
 }
 
-func TestPromptAloneIsNotCappedByTheCompiledOverheadAndKeytermsAloneByNoPrompt(t *testing.T) {
+func TestPromptIsCappedAloneAndKeytermsDoNotCountAgainstIt(t *testing.T) {
 	r := newRig(t)
 	mustTranscribe(t, r, &TranscribeOptions{Prompt: strings.Repeat("p", maxPromptChars)})
 	r = newRig(t)
 	mustTranscribe(t, r, &TranscribeOptions{Keyterms: uniqueTerms(maxKeyterms)})
+	r = newRig(t)
+	mustTranscribe(t, r, &TranscribeOptions{Keyterms: uniqueTerms(maxKeyterms), Prompt: strings.Repeat("p", maxPromptChars)})
+	r = newRig(t)
+	_, err := r.transcribe(&TranscribeOptions{Keyterms: []string{"alpha"}, Prompt: strings.Repeat("p", maxPromptChars+1)})
+	e := wantCode(t, err, KindPreflight, "invalid_option")
+	if e.Message != "Prompt is longer than 2000 characters." {
+		t.Errorf("message = %q", e.Message)
+	}
+}
+
+func languageRefusal(option, language string) string {
+	return option + ` does not work for language "` + language + `"; it needs language to be one of ` + strings.Join(stt37Languages, ", ") + `.`
+}
+
+func TestSourceLanguageListsAreTheAPIsHundredAndThreeCodes(t *testing.T) {
+	all := map[string]bool{}
+	for _, code := range append(slices.Clone(stt37Languages), universal2Languages...) {
+		all[code] = true
+	}
+	if len(all) != 103 || len(stt37Languages) != 33 || len(universal2Languages) != 70 {
+		t.Errorf("lists hold %d codes in all, %d STT37 and %d universal-2; want 103, 33 and 70", len(all), len(stt37Languages), len(universal2Languages))
+	}
+}
+
+func TestKeytermsAndPromptAreRefusedInUniversal2Languages(t *testing.T) {
+	for _, language := range universal2Languages {
+		for option, opts := range map[string]TranscribeOptions{
+			"keyterms": {Keyterms: []string{"Hushscript"}, Language: language},
+			"prompt":   {Prompt: "Names.", Language: language},
+		} {
+			t.Run(language+"/"+option, func(t *testing.T) {
+				r := newRig(t)
+				_, err := r.transcribe(&opts)
+				e := wantCode(t, err, KindPreflight, "invalid_option")
+				if want := languageRefusal(option, language); e.Message != want {
+					t.Errorf("message = %q, want %q", e.Message, want)
+				}
+				if e.Status != 0 {
+					t.Errorf("status = %d, want none", e.Status)
+				}
+				if n := r.api.total(); n != 0 {
+					t.Errorf("%d requests were sent for an invalid option", n)
+				}
+			})
+		}
+	}
+}
+
+func TestKeytermsAndPromptPassInSTT37Languages(t *testing.T) {
+	for _, language := range stt37Languages {
+		t.Run(language, func(t *testing.T) {
+			r := newRig(t)
+			mustTranscribe(t, r, &TranscribeOptions{Keyterms: []string{"Hushscript"}, Prompt: "Names.", Language: language})
+			var body struct {
+				Options map[string]any `json:"transcription_options"`
+			}
+			if err := json.Unmarshal(nth(t, r.api.requests("create"), 0).body, &body); err != nil {
+				t.Fatal(err)
+			}
+			if body.Options["language_code"] != language {
+				t.Errorf("language_code = %v, want %s", body.Options["language_code"], language)
+			}
+		})
+	}
+}
+
+func TestKeytermsAndPromptLanguageRuleEdgeCases(t *testing.T) {
+	for name, tc := range map[string]struct {
+		opts TranscribeOptions
+		want string // the refusal message; empty means the call must pass
+	}{
+		"keyterms named when both are given":     {opts: TranscribeOptions{Keyterms: []string{"x"}, Prompt: "Names.", Language: "pl"}, want: languageRefusal("keyterms", "pl")},
+		"language is trimmed and lowercased":     {opts: TranscribeOptions{Keyterms: []string{"x"}, Language: " PL "}, want: languageRefusal("keyterms", "pl")},
+		"prompt named next to blank key terms":   {opts: TranscribeOptions{Keyterms: []string{" ", ""}, Prompt: "Names.", Language: "th"}, want: languageRefusal("prompt", "th")},
+		"blank key terms and blank prompt pass":  {opts: TranscribeOptions{Keyterms: []string{" ", ""}, Prompt: "  ", Language: "pl"}},
+		"empty key term list passes":             {opts: TranscribeOptions{Keyterms: []string{}, Language: "pl"}},
+		"keep disfluencies alone passes":         {opts: TranscribeOptions{KeepDisfluencies: true, Language: "pl"}},
+		"auto-detect with key terms and prompt":  {opts: TranscribeOptions{Keyterms: []string{"Hushscript"}, Prompt: "Names."}},
+		"a code in neither list is the server's": {opts: TranscribeOptions{Keyterms: []string{"Hushscript"}, Language: "xx"}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			r := newRig(t)
+			opts := tc.opts
+			_, err := r.transcribe(&opts)
+			if tc.want == "" {
+				if err != nil {
+					t.Fatalf("err = %v", err)
+				}
+				return
+			}
+			e := wantCode(t, err, KindPreflight, "invalid_option")
+			if e.Message != tc.want {
+				t.Errorf("message = %q, want %q", e.Message, tc.want)
+			}
+			if n := r.api.total(); n != 0 {
+				t.Errorf("%d requests were sent for an invalid option", n)
+			}
+		})
+	}
 }
 
 func TestContextOptionsAreNormalizedBeforeTheyAreSent(t *testing.T) {
