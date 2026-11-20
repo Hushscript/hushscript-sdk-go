@@ -130,8 +130,8 @@ func checkKey(red redactor, key string) error {
 // medicalLanguages mirrors the backend's MEDICAL_LANGUAGES, compared exactly.
 var medicalLanguages = []string{"en", "en_au", "en_uk", "en_us", "es", "fr", "de", "de_ch"}
 
-// vetLanguages mirrors the backend's VET_LANGUAGES, empty until the STT-3.7 probe measures the veterinary domain.
-var vetLanguages []string
+// vetLanguages mirrors the backend's VET_LANGUAGES, compared exactly.
+var vetLanguages = []string{"en", "en_au", "en_uk", "en_us", "es", "fr", "de", "de_ch"}
 
 func checkOptions(red redactor, opts *TranscribeOptions) error {
 	if opts.Medical && opts.Vet {
@@ -141,7 +141,7 @@ func checkOptions(red redactor, opts *TranscribeOptions) error {
 		return invalidOption(red, "Medical needs Language to be one of en, en_au, en_uk, en_us, es, fr, de or de_ch.", nil)
 	}
 	if opts.Vet && !slices.Contains(vetLanguages, opts.Language) {
-		return invalidOption(red, "Vet needs Language to be one of the supported veterinary languages.", nil)
+		return invalidOption(red, "Vet needs Language to be one of en, en_au, en_uk, en_us, es, fr, de or de_ch.", nil)
 	}
 	if err := checkContext(red, opts); err != nil {
 		return err

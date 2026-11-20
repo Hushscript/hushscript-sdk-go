@@ -67,8 +67,8 @@ type TranscribeOptions struct {
 	// Medical transcribes as a medical dictation (billed double); Language must be en, en_au, en_uk, en_us,
 	// es, fr, de or de_ch. Cannot be combined with Vet.
 	Medical bool
-	// Vet transcribes as a veterinary dictation (billed double, like Medical); Language must be one of the
-	// supported veterinary languages. Cannot be combined with Medical.
+	// Vet transcribes as a veterinary dictation (billed double, like Medical); Language must be en, en_au,
+	// en_uk, en_us, es, fr, de or de_ch. Cannot be combined with Medical.
 	Vet bool
 	// KeepDisfluencies keeps filler words in the transcript and, on languages that support it, repetitions,
 	// stutters and false starts. Free.

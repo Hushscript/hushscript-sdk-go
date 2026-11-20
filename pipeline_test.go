@@ -1012,7 +1012,7 @@ func TestInvalidOptionsAreRefusedBeforeAnyRequestAndNeverClamped(t *testing.T) {
 		"medical without lang":   {Medical: true},
 		"medical in Japanese":    {Medical: true, Language: "ja"},
 		"vet without lang":       {Vet: true},
-		"vet in English":         {Vet: true, Language: "en"},
+		"vet in Japanese":        {Vet: true, Language: "ja"},
 		"medical and vet":        {Medical: true, Vet: true, Language: "en"},
 		"too many keyterms":      {Keyterms: uniqueTerms(maxKeyterms + 1)},
 		"a keyterm of 7 words":   {Keyterms: []string{"one two three four five six seven"}},
@@ -1701,9 +1701,6 @@ func TestEachTranscriptionOptionSetAloneReachesTheCreateBody(t *testing.T) {
 }
 
 func TestVetWithAListedLanguageSendsVetMode(t *testing.T) {
-	saved := vetLanguages
-	vetLanguages = []string{"en"}
-	t.Cleanup(func() { vetLanguages = saved })
 	r := newRig(t)
 	mustTranscribe(t, r, &TranscribeOptions{Vet: true, Language: "en"})
 	var body struct {
