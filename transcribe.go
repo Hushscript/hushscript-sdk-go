@@ -133,6 +133,25 @@ var medicalLanguages = []string{"en", "en_au", "en_uk", "en_us", "es", "fr", "de
 // vetLanguages mirrors the backend's VET_LANGUAGES, compared exactly.
 var vetLanguages = []string{"en", "en_au", "en_uk", "en_us", "es", "fr", "de", "de_ch"}
 
+// stt37Languages mirrors the API's STT37_LANGUAGES: the languages that apply key terms and a prompt.
+var stt37Languages = []string{
+	"af", "ar", "ca", "da", "de", "de_ch", "en", "en_au", "en_uk", "en_us",
+	"es", "et", "fa", "fi", "fr", "gl", "he", "hi", "it", "ja",
+	"ko", "mr", "nl", "nn", "no", "pt", "ro", "ru", "sv", "tr",
+	"ur", "vi", "zh",
+}
+
+// universal2Languages is the rest of the API's source languages; the server names a code in neither list itself.
+var universal2Languages = []string{
+	"am", "as", "az", "ba", "be", "bg", "bn", "bo", "br", "bs",
+	"cs", "cy", "el", "eu", "fo", "gu", "ha", "haw", "hr", "ht",
+	"hu", "hy", "id", "is", "jw", "ka", "kk", "km", "kn", "la",
+	"lb", "ln", "lo", "lt", "lv", "mg", "mi", "mk", "ml", "mn",
+	"ms", "mt", "my", "ne", "oc", "pa", "pl", "ps", "sa", "sd",
+	"si", "sk", "sl", "sn", "so", "sq", "sr", "su", "sw", "ta",
+	"te", "tg", "th", "tk", "tl", "tt", "uk", "uz", "yi", "yo",
+}
+
 func checkOptions(red redactor, opts *TranscribeOptions) error {
 	if opts.Medical && opts.Vet {
 		return invalidOption(red, "Medical and Vet cannot be combined.", nil)
@@ -200,11 +219,34 @@ func compiledPromptChars(prompt string, terms []string) int {
 	return total
 }
 
+// checkContextLanguage refuses key terms or a prompt in a language the API does not apply them in. The
+// language is trimmed and lowercased first, as the backend does; auto-detect and a code in neither list
+// pass.
+func checkContextLanguage(red redactor, opts *TranscribeOptions, normalized contextOptions) error {
+	language := strings.ToLower(strings.TrimFunc(opts.Language, isContextSpace))
+	if !slices.Contains(universal2Languages, language) {
+		return nil
+	}
+	var option string
+	switch {
+	case len(normalized.terms) > 0:
+		option = "keyterms"
+	case normalized.prompt != "":
+		option = "prompt"
+	default:
+		return nil
+	}
+	return invalidOption(red, option+` does not work for language "`+language+`"; it needs language to be one of `+strings.Join(stt37Languages, ", ")+`.`, nil)
+}
+
 // checkContext applies the backend's key term and prompt limits to what normalizeContext leaves, so a
 // violation fails before any request. Saved dictionaries and prompt presets are merged server-side
 // and cannot be seen here; the server stays the authority on them.
 func checkContext(red redactor, opts *TranscribeOptions) error {
 	normalized := normalizeContext(opts)
+	if err := checkContextLanguage(red, opts, normalized); err != nil {
+		return err
+	}
 	for i, term := range normalized.terms {
 		index := normalized.origin[i]
 		if len(strings.FieldsFunc(term, isContextSpace)) > maxKeytermWords {

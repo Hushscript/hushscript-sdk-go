@@ -1926,6 +1926,97 @@ func TestPromptAloneIsNotCappedByTheCompiledOverheadAndKeytermsAloneByNoPrompt(t
 	mustTranscribe(t, r, &TranscribeOptions{Keyterms: uniqueTerms(maxKeyterms)})
 }
 
+func languageRefusal(option, language string) string {
+	return option + ` does not work for language "` + language + `"; it needs language to be one of ` + strings.Join(stt37Languages, ", ") + `.`
+}
+
+func TestSourceLanguageListsAreTheAPIsHundredAndThreeCodes(t *testing.T) {
+	all := map[string]bool{}
+	for _, code := range append(slices.Clone(stt37Languages), universal2Languages...) {
+		all[code] = true
+	}
+	if len(all) != 103 || len(stt37Languages) != 33 || len(universal2Languages) != 70 {
+		t.Errorf("lists hold %d codes in all, %d STT37 and %d universal-2; want 103, 33 and 70", len(all), len(stt37Languages), len(universal2Languages))
+	}
+}
+
+func TestKeytermsAndPromptAreRefusedInUniversal2Languages(t *testing.T) {
+	for _, language := range universal2Languages {
+		for option, opts := range map[string]TranscribeOptions{
+			"keyterms": {Keyterms: []string{"Hushscript"}, Language: language},
+			"prompt":   {Prompt: "Names.", Language: language},
+		} {
+			t.Run(language+"/"+option, func(t *testing.T) {
+				r := newRig(t)
+				_, err := r.transcribe(&opts)
+				e := wantCode(t, err, KindPreflight, "invalid_option")
+				if want := languageRefusal(option, language); e.Message != want {
+					t.Errorf("message = %q, want %q", e.Message, want)
+				}
+				if e.Status != 0 {
+					t.Errorf("status = %d, want none", e.Status)
+				}
+				if n := r.api.total(); n != 0 {
+					t.Errorf("%d requests were sent for an invalid option", n)
+				}
+			})
+		}
+	}
+}
+
+func TestKeytermsAndPromptPassInSTT37Languages(t *testing.T) {
+	for _, language := range stt37Languages {
+		t.Run(language, func(t *testing.T) {
+			r := newRig(t)
+			mustTranscribe(t, r, &TranscribeOptions{Keyterms: []string{"Hushscript"}, Prompt: "Names.", Language: language})
+			var body struct {
+				Options map[string]any `json:"transcription_options"`
+			}
+			if err := json.Unmarshal(nth(t, r.api.requests("create"), 0).body, &body); err != nil {
+				t.Fatal(err)
+			}
+			if body.Options["language_code"] != language {
+				t.Errorf("language_code = %v, want %s", body.Options["language_code"], language)
+			}
+		})
+	}
+}
+
+func TestKeytermsAndPromptLanguageRuleEdgeCases(t *testing.T) {
+	for name, tc := range map[string]struct {
+		opts TranscribeOptions
+		want string // the refusal message; empty means the call must pass
+	}{
+		"keyterms named when both are given":     {opts: TranscribeOptions{Keyterms: []string{"x"}, Prompt: "Names.", Language: "pl"}, want: languageRefusal("keyterms", "pl")},
+		"language is trimmed and lowercased":     {opts: TranscribeOptions{Keyterms: []string{"x"}, Language: " PL "}, want: languageRefusal("keyterms", "pl")},
+		"prompt named next to blank key terms":   {opts: TranscribeOptions{Keyterms: []string{" ", ""}, Prompt: "Names.", Language: "th"}, want: languageRefusal("prompt", "th")},
+		"blank key terms and blank prompt pass":  {opts: TranscribeOptions{Keyterms: []string{" ", ""}, Prompt: "  ", Language: "pl"}},
+		"empty key term list passes":             {opts: TranscribeOptions{Keyterms: []string{}, Language: "pl"}},
+		"keep disfluencies alone passes":         {opts: TranscribeOptions{KeepDisfluencies: true, Language: "pl"}},
+		"auto-detect with key terms and prompt":  {opts: TranscribeOptions{Keyterms: []string{"Hushscript"}, Prompt: "Names."}},
+		"a code in neither list is the server's": {opts: TranscribeOptions{Keyterms: []string{"Hushscript"}, Language: "xx"}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			r := newRig(t)
+			opts := tc.opts
+			_, err := r.transcribe(&opts)
+			if tc.want == "" {
+				if err != nil {
+					t.Fatalf("err = %v", err)
+				}
+				return
+			}
+			e := wantCode(t, err, KindPreflight, "invalid_option")
+			if e.Message != tc.want {
+				t.Errorf("message = %q, want %q", e.Message, tc.want)
+			}
+			if n := r.api.total(); n != 0 {
+				t.Errorf("%d requests were sent for an invalid option", n)
+			}
+		})
+	}
+}
+
 func TestContextOptionsAreNormalizedBeforeTheyAreSent(t *testing.T) {
 	for name, tc := range map[string]struct {
 		opts TranscribeOptions
