@@ -1011,6 +1011,9 @@ func TestInvalidOptionsAreRefusedBeforeAnyRequestAndNeverClamped(t *testing.T) {
 		"key with a NUL first":   {IdempotencyKey: "\x00123456789abcdef"},
 		"medical without lang":   {Medical: true},
 		"medical in Japanese":    {Medical: true, Language: "ja"},
+		"vet without lang":       {Vet: true},
+		"vet in English":         {Vet: true, Language: "en"},
+		"medical and vet":        {Medical: true, Vet: true, Language: "en"},
 		"too many keyterms":      {Keyterms: uniqueTerms(maxKeyterms + 1)},
 		"a keyterm of 7 words":   {Keyterms: []string{"one two three four five six seven"}},
 		"matter code too long":   {MatterCode: strings.Repeat("m", 65)},
@@ -1031,7 +1034,7 @@ func TestInvalidOptionsAreRefusedBeforeAnyRequestAndNeverClamped(t *testing.T) {
 			t.Errorf("concurrency %d: %v", concurrency, err)
 		}
 	}
-	if _, err := r.transcribe(&TranscribeOptions{Medical: true, Language: "de", Keyterms: []string{"one two three four five six"}, MatterCode: strings.Repeat("m", 64)}); err != nil {
+	if _, err := r.transcribe(&TranscribeOptions{Medical: true, Language: "de_ch", Keyterms: []string{"one two three four five six"}, MatterCode: strings.Repeat("m", 64)}); err != nil {
 		t.Errorf("limits are inclusive: %v", err)
 	}
 }
@@ -1669,16 +1672,17 @@ func TestEachTranscriptionOptionSetAloneReachesTheCreateBody(t *testing.T) {
 		opts TranscribeOptions
 		want string
 	}{
-		"language":        {opts: TranscribeOptions{Language: "en"}, want: `{"language_code":"en"}`},
-		"speakers off":    {opts: TranscribeOptions{Speakers: &no}, want: `{"speaker_detection":false}`},
-		"speakers on":     {opts: TranscribeOptions{Speakers: &yes}, want: `{"speaker_detection":true}`},
-		"one translation": {opts: TranscribeOptions{TranslateTo: []string{"de"}}, want: `{"translation_targets":["de"]}`},
-		"one keyterm":     {opts: TranscribeOptions{Keyterms: []string{"alpha"}}, want: `{"keyterms_prompt":["alpha"]}`},
-		"prompt":          {opts: TranscribeOptions{Prompt: "ctx"}, want: `{"prompt":"ctx"}`},
-		"medical":         {opts: TranscribeOptions{Medical: true, Language: "fr"}, want: `{"language_code":"fr","medical_mode":true}`},
-		"multichannel":    {opts: TranscribeOptions{Multichannel: true}, want: `{"multichannel":true}`},
-		"insights off":    {opts: TranscribeOptions{AutoInsights: &no}, want: `{"auto_generate_insights":false}`},
-		"insights on":     {opts: TranscribeOptions{AutoInsights: &yes}, want: `{"auto_generate_insights":true}`},
+		"language":          {opts: TranscribeOptions{Language: "en"}, want: `{"language_code":"en"}`},
+		"speakers off":      {opts: TranscribeOptions{Speakers: &no}, want: `{"speaker_detection":false}`},
+		"speakers on":       {opts: TranscribeOptions{Speakers: &yes}, want: `{"speaker_detection":true}`},
+		"one translation":   {opts: TranscribeOptions{TranslateTo: []string{"de"}}, want: `{"translation_targets":["de"]}`},
+		"one keyterm":       {opts: TranscribeOptions{Keyterms: []string{"alpha"}}, want: `{"keyterms_prompt":["alpha"]}`},
+		"prompt":            {opts: TranscribeOptions{Prompt: "ctx"}, want: `{"prompt":"ctx"}`},
+		"medical":           {opts: TranscribeOptions{Medical: true, Language: "fr"}, want: `{"language_code":"fr","medical_mode":true}`},
+		"keep disfluencies": {opts: TranscribeOptions{KeepDisfluencies: true}, want: `{"keep_disfluencies":true}`},
+		"multichannel":      {opts: TranscribeOptions{Multichannel: true}, want: `{"multichannel":true}`},
+		"insights off":      {opts: TranscribeOptions{AutoInsights: &no}, want: `{"auto_generate_insights":false}`},
+		"insights on":       {opts: TranscribeOptions{AutoInsights: &yes}, want: `{"auto_generate_insights":true}`},
 	} {
 		t.Run(name, func(t *testing.T) {
 			r := newRig(t)
@@ -1693,6 +1697,23 @@ func TestEachTranscriptionOptionSetAloneReachesTheCreateBody(t *testing.T) {
 				t.Errorf("transcription_options = %s, want %s", body.Options, tc.want)
 			}
 		})
+	}
+}
+
+func TestVetWithAListedLanguageSendsVetMode(t *testing.T) {
+	saved := vetLanguages
+	vetLanguages = []string{"en"}
+	t.Cleanup(func() { vetLanguages = saved })
+	r := newRig(t)
+	mustTranscribe(t, r, &TranscribeOptions{Vet: true, Language: "en"})
+	var body struct {
+		Options json.RawMessage `json:"transcription_options"`
+	}
+	if err := json.Unmarshal(nth(t, r.api.requests("create"), 0).body, &body); err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"language_code":"en","vet_mode":true}`; string(body.Options) != want {
+		t.Errorf("transcription_options = %s, want %s", body.Options, want)
 	}
 }
 
