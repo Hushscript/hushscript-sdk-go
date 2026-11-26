@@ -49,7 +49,9 @@ type TranscribeOptions struct {
 	Language string
 	// Speakers turns speaker labels on or off; nil leaves the API's default.
 	Speakers *bool
-	// TranslateTo lists locales to translate into: +25% of the duration each, and speakers are forced on.
+	// TranslateTo lists locales to translate into: +25% of the duration each. Speakers is not affected: it
+	// is sent as set. Each target is trimmed, lowercased and counted once; blanks are dropped. More than 15
+	// distinct targets is an invalid_option error, raised before any request.
 	TranslateTo []string
 	// Keyterms biases transcription toward domain vocabulary. Each term is trimmed (Unicode white
 	// space), blank terms are dropped and repeated terms count once. At most 1000 terms remain, each

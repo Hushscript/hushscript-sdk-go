@@ -1034,6 +1034,11 @@ func TestInvalidOptionsAreRefusedBeforeAnyRequestAndNeverClamped(t *testing.T) {
 			t.Errorf("concurrency %d: %v", concurrency, err)
 		}
 	}
+	for _, opts := range []TranscribeOptions{{Medical: true, Language: " DE_CH "}, {Vet: true, Language: "En"}} {
+		if _, err := r.transcribe(&opts); err != nil {
+			t.Errorf("the backend trims and lowercases the language first: %+v: %v", opts, err)
+		}
+	}
 	if _, err := r.transcribe(&TranscribeOptions{Medical: true, Language: "de_ch", Keyterms: []string{"one two three four five six"}, MatterCode: strings.Repeat("m", 64)}); err != nil {
 		t.Errorf("limits are inclusive: %v", err)
 	}
@@ -1672,17 +1677,18 @@ func TestEachTranscriptionOptionSetAloneReachesTheCreateBody(t *testing.T) {
 		opts TranscribeOptions
 		want string
 	}{
-		"language":          {opts: TranscribeOptions{Language: "en"}, want: `{"language_code":"en"}`},
-		"speakers off":      {opts: TranscribeOptions{Speakers: &no}, want: `{"speaker_detection":false}`},
-		"speakers on":       {opts: TranscribeOptions{Speakers: &yes}, want: `{"speaker_detection":true}`},
-		"one translation":   {opts: TranscribeOptions{TranslateTo: []string{"de"}}, want: `{"translation_targets":["de"]}`},
-		"one keyterm":       {opts: TranscribeOptions{Keyterms: []string{"alpha"}}, want: `{"keyterms_prompt":["alpha"]}`},
-		"prompt":            {opts: TranscribeOptions{Prompt: "ctx"}, want: `{"prompt":"ctx"}`},
-		"medical":           {opts: TranscribeOptions{Medical: true, Language: "fr"}, want: `{"language_code":"fr","medical_mode":true}`},
-		"keep disfluencies": {opts: TranscribeOptions{KeepDisfluencies: true}, want: `{"keep_disfluencies":true}`},
-		"multichannel":      {opts: TranscribeOptions{Multichannel: true}, want: `{"multichannel":true}`},
-		"insights off":      {opts: TranscribeOptions{AutoInsights: &no}, want: `{"auto_generate_insights":false}`},
-		"insights on":       {opts: TranscribeOptions{AutoInsights: &yes}, want: `{"auto_generate_insights":true}`},
+		"language":                  {opts: TranscribeOptions{Language: "en"}, want: `{"language_code":"en"}`},
+		"speakers off":              {opts: TranscribeOptions{Speakers: &no}, want: `{"speaker_detection":false}`},
+		"speakers on":               {opts: TranscribeOptions{Speakers: &yes}, want: `{"speaker_detection":true}`},
+		"one translation":           {opts: TranscribeOptions{TranslateTo: []string{"de"}}, want: `{"translation_targets":["de"]}`},
+		"translation, speakers off": {opts: TranscribeOptions{Speakers: &no, TranslateTo: []string{"de"}}, want: `{"speaker_detection":false,"translation_targets":["de"]}`},
+		"one keyterm":               {opts: TranscribeOptions{Keyterms: []string{"alpha"}}, want: `{"keyterms_prompt":["alpha"]}`},
+		"prompt":                    {opts: TranscribeOptions{Prompt: "ctx"}, want: `{"prompt":"ctx"}`},
+		"medical":                   {opts: TranscribeOptions{Medical: true, Language: "fr"}, want: `{"language_code":"fr","medical_mode":true}`},
+		"keep disfluencies":         {opts: TranscribeOptions{KeepDisfluencies: true}, want: `{"keep_disfluencies":true}`},
+		"multichannel":              {opts: TranscribeOptions{Multichannel: true}, want: `{"multichannel":true}`},
+		"insights off":              {opts: TranscribeOptions{AutoInsights: &no}, want: `{"auto_generate_insights":false}`},
+		"insights on":               {opts: TranscribeOptions{AutoInsights: &yes}, want: `{"auto_generate_insights":true}`},
 	} {
 		t.Run(name, func(t *testing.T) {
 			r := newRig(t)
@@ -1806,6 +1812,17 @@ func uniqueTerms(n int) []string {
 	return terms
 }
 
+// uniqueTargets is n distinct base language codes from the API's source languages.
+func uniqueTargets(n int) []string {
+	var out []string
+	for _, code := range stt37Languages {
+		if !strings.Contains(code, "_") {
+			out = append(out, code)
+		}
+	}
+	return out[:n]
+}
+
 func TestContextLimitsPassAtTheirBoundaryAndFailOneOver(t *testing.T) {
 	words := func(n int, sep string) string { return strings.TrimSuffix(strings.Repeat("w"+sep, n), sep) }
 	// 128 characters of the first kind pass; the same count of 4-byte runes is 512 bytes, so a byte count would fail it.
@@ -1830,6 +1847,10 @@ func TestContextLimitsPassAtTheirBoundaryAndFailOneOver(t *testing.T) {
 		"keyterms over the cap":          {opts: TranscribeOptions{Keyterms: uniqueTerms(maxKeyterms + 1)}, want: "Keyterms takes at most 1000 unique terms."},
 		"duplicates count once":          {opts: TranscribeOptions{Keyterms: append(uniqueTerms(maxKeyterms), " term0 ", "term1")}, ok: true},
 		"blanks do not count":            {opts: TranscribeOptions{Keyterms: append(uniqueTerms(maxKeyterms), "", "  ", "\u3000")}, ok: true},
+		"targets at the cap":             {opts: TranscribeOptions{TranslateTo: uniqueTargets(maxTranslateTo)}, ok: true},
+		"targets over the cap":           {opts: TranscribeOptions{TranslateTo: uniqueTargets(maxTranslateTo + 1)}, want: "TranslateTo takes at most 15 distinct languages."},
+		"repeated targets count once":    {opts: TranscribeOptions{TranslateTo: append(uniqueTargets(maxTranslateTo), " DE ", "de", "Fr")}, ok: true},
+		"blank targets do not count":     {opts: TranscribeOptions{TranslateTo: append(uniqueTargets(maxTranslateTo), "", " ", "\u3000")}, ok: true},
 		"prompt of the cap":              {opts: TranscribeOptions{Prompt: strings.Repeat("p", maxPromptChars)}, ok: true},
 		"prompt over the cap":            {opts: TranscribeOptions{Prompt: strings.Repeat("p", maxPromptChars+1)}, want: "Prompt is longer than 2000 characters."},
 		"multibyte prompt of the cap":    {opts: TranscribeOptions{Prompt: strings.Repeat("😀", maxPromptChars)}, ok: true},
@@ -1865,6 +1886,7 @@ func TestContextLimitsAreTheBackendConstants(t *testing.T) {
 		"maxKeytermChars": {maxKeytermChars, 128},
 		"maxPromptChars":  {maxPromptChars, 2000},
 		"maxKeytermTotal": {maxKeytermTotal, 1000},
+		"maxTranslateTo":  {maxTranslateTo, 15},
 	} {
 		if got[0] != got[1] {
 			t.Errorf("%s = %d, want the backend's %d", name, got[0], got[1])
