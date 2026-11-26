@@ -28,6 +28,7 @@ const (
 	maxKeytermChars    = 128
 	maxKeytermTotal    = 1000
 	maxPromptChars     = 2000
+	maxTranslateTo     = 15
 	maxMatterCodeChars = 64
 	minKeyLength       = 16
 	maxKeyLength       = 128
@@ -119,10 +120,10 @@ func checkKey(red redactor, key string) error {
 	return nil
 }
 
-// medicalLanguages mirrors the backend's MEDICAL_LANGUAGES, compared exactly.
+// medicalLanguages mirrors the backend's MEDICAL_LANGUAGES, compared after the backend's own normalization.
 var medicalLanguages = []string{"en", "en_au", "en_uk", "en_us", "es", "fr", "de", "de_ch"}
 
-// vetLanguages mirrors the backend's VET_LANGUAGES, compared exactly.
+// vetLanguages mirrors the backend's VET_LANGUAGES, compared after the backend's own normalization.
 var vetLanguages = []string{"en", "en_au", "en_uk", "en_us", "es", "fr", "de", "de_ch"}
 
 // stt37Languages mirrors the API's STT37_LANGUAGES: the languages that apply key terms and a prompt.
@@ -148,19 +149,54 @@ func checkOptions(red redactor, opts *TranscribeOptions) error {
 	if opts.Medical && opts.Vet {
 		return invalidOption(red, "Medical and Vet cannot be combined.", nil)
 	}
-	if opts.Medical && !slices.Contains(medicalLanguages, opts.Language) {
+	if opts.Medical && !slices.Contains(medicalLanguages, sourceLanguage(opts)) {
 		return invalidOption(red, "Medical needs Language to be one of en, en_au, en_uk, en_us, es, fr, de or de_ch.", nil)
 	}
-	if opts.Vet && !slices.Contains(vetLanguages, opts.Language) {
+	if opts.Vet && !slices.Contains(vetLanguages, sourceLanguage(opts)) {
 		return invalidOption(red, "Vet needs Language to be one of en, en_au, en_uk, en_us, es, fr, de or de_ch.", nil)
 	}
 	if err := checkContext(red, opts); err != nil {
 		return err
 	}
+	if distinctTargets(opts.TranslateTo) > maxTranslateTo {
+		return invalidOption(red, "TranslateTo takes at most 15 distinct languages.", nil)
+	}
 	if len([]rune(opts.MatterCode)) > maxMatterCodeChars {
 		return invalidOption(red, "MatterCode is at most 64 characters.", nil)
 	}
 	return nil
+}
+
+// distinctTargets is how many translation targets the backend keeps: each trimmed (Unicode white space)
+// and lowercased (ASCII), blank ones dropped, repeated ones counted once.
+func distinctTargets(targets []string) int {
+	var seen map[string]struct{}
+	for _, raw := range targets {
+		target := strings.TrimFunc(raw, isContextSpace)
+		if target == "" {
+			continue
+		}
+		if seen == nil {
+			seen = make(map[string]struct{}, len(targets))
+		}
+		seen[asciiLower(target)] = struct{}{}
+	}
+	return len(seen)
+}
+
+// asciiLower lowercases A to Z only, as the backend's to_ascii_lowercase does.
+func asciiLower(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r >= 'A' && r <= 'Z' {
+			return r + 'a' - 'A'
+		}
+		return r
+	}, s)
+}
+
+// sourceLanguage is Language as the backend reads it: trimmed (Unicode white space) and lowercased (ASCII).
+func sourceLanguage(opts *TranscribeOptions) string {
+	return asciiLower(strings.TrimFunc(opts.Language, isContextSpace))
 }
 
 // isContextSpace is Unicode White_Space, the set Rust's str::trim and split_whitespace use on the
@@ -204,7 +240,7 @@ func normalizeContext(opts *TranscribeOptions) contextOptions {
 // language is trimmed and lowercased first, as the backend does; auto-detect and a code in neither list
 // pass.
 func checkContextLanguage(red redactor, opts *TranscribeOptions, normalized contextOptions) error {
-	language := strings.ToLower(strings.TrimFunc(opts.Language, isContextSpace))
+	language := sourceLanguage(opts)
 	if !slices.Contains(universal2Languages, language) {
 		return nil
 	}
