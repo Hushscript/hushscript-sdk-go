@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [1.2.0](https://github.com/Hushscript/hushscript-sdk-go/compare/v1.1.1...v1.2.0) (2026-11-27)
 
 ### Features
 
@@ -14,14 +14,6 @@
 ### Documentation
 
 * README links point at the live pricing page and the SDK section of the developers page; the old `/pricing` and `/sdks` URLs redirect there.
-
-## [1.2.0](https://github.com/Hushscript/hushscript-sdk-go/compare/v1.1.1...v1.2.0) (2026-11-27)
-
-
-### Bug Fixes
-
-* sync the api spec with production and pin conformance v1.1.0 ([0285d46](https://github.com/Hushscript/hushscript-sdk-go/commit/0285d4668df0cc9569ca7daec61a048d1c9aeba1))
-* translation no longer forces speakers, cap targets at 15, sync spec ([78f5259](https://github.com/Hushscript/hushscript-sdk-go/commit/78f5259b835cf2ef22575987b5321b63c7879901))
 
 ## [1.1.1](https://github.com/Hushscript/hushscript-sdk-go/compare/v1.1.0...v1.1.1) (2026-10-31)
 
