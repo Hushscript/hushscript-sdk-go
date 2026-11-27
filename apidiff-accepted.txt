@@ -1,4 +1,5 @@
-v1.1.1
-- ./generated.LessThannil: removed
-- ./generated.MediaUndecodable: removed
-- ./generated.MediaUnreadable: removed
+v1.2.0
+- ./generated.CreateUploadJSONBody.Mode: changed from *string to *CreateUploadJSONBodyMode
+- ./generated.CreateUploadJSONRequestBody.Mode: changed from *string to *CreateUploadJSONBodyMode
+- ./generated.OrgSummaryResponse.IsOwner: removed
+- ./generated.OrgSummaryResponse.OwnerUserId: removed
