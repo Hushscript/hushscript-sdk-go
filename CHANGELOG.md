@@ -10,6 +10,10 @@
 
 * translation targets no longer force speaker detection on: `Speakers` is sent as set; `TranslateTo` takes at most 15 distinct languages (an `invalid_option` error before any request); the API accepts every base language as a target (99 codes, no regional variants); `Medical` and `Vet` compare `Language` after trimming and lowercasing, as the API does; the generated client is synced with the API spec.
 
+### Documentation
+
+* README links point at the live pricing page and the SDK section of the developers page; the old `/pricing` and `/sdks` URLs redirect there.
+
 ## 1.0.0 (2026-10-13)
 
 
