@@ -9,6 +9,7 @@
 ### Bug Fixes
 
 * translation targets no longer force speaker detection on: `Speakers` is sent as set; `TranslateTo` takes at most 15 distinct languages (an `invalid_option` error before any request); the API accepts every base language as a target (99 codes, no regional variants); `Medical` and `Vet` compare `Language` after trimming and lowercasing, as the API does; the generated client is synced with the API spec.
+* the API spec is synced with production: `translation_targets` no longer declares `maxItems` (the API counts the 15-target cap after dedup, as the SDK already does); the conformance suite is pinned to the `v1.1.0` tag.
 
 ### Documentation
 
