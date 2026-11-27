@@ -202,6 +202,27 @@ func (e OrgMatterStatus) Valid() bool {
 	}
 }
 
+// Defines values for OrgSummaryResponseMatterCodePolicy.
+const (
+	Off      OrgSummaryResponseMatterCodePolicy = "off"
+	Optional OrgSummaryResponseMatterCodePolicy = "optional"
+	Required OrgSummaryResponseMatterCodePolicy = "required"
+)
+
+// Valid indicates whether the value is a known member of the OrgSummaryResponseMatterCodePolicy enum.
+func (e OrgSummaryResponseMatterCodePolicy) Valid() bool {
+	switch e {
+	case Off:
+		return true
+	case Optional:
+		return true
+	case Required:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for OrgUsageResponseGroupBy.
 const (
 	OrgUsageResponseGroupByClient OrgUsageResponseGroupBy = "client"
@@ -505,6 +526,27 @@ func (e OrgUsageReportCsvParamsGroupBy) Valid() bool {
 	}
 }
 
+// Defines values for CreateUploadJSONBodyMode.
+const (
+	CreateUploadJSONBodyModeLessThannil CreateUploadJSONBodyMode = "<nil>"
+	CreateUploadJSONBodyModePrivate     CreateUploadJSONBodyMode = "private"
+	CreateUploadJSONBodyModeStandard    CreateUploadJSONBodyMode = "standard"
+)
+
+// Valid indicates whether the value is a known member of the CreateUploadJSONBodyMode enum.
+func (e CreateUploadJSONBodyMode) Valid() bool {
+	switch e {
+	case CreateUploadJSONBodyModeLessThannil:
+		return true
+	case CreateUploadJSONBodyModePrivate:
+		return true
+	case CreateUploadJSONBodyModeStandard:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CreateUploadJSONBodyOriginSource.
 const (
 	CreateUploadJSONBodyOriginSourceLessThannil CreateUploadJSONBodyOriginSource = "<nil>"
@@ -585,7 +627,7 @@ type AgentClaimResponse struct {
 // AgentCredentialsRotateResponse defines model for AgentCredentialsRotateResponse.
 type AgentCredentialsRotateResponse struct {
 	// ExpiresAt The successor's expiry policy, carried over from the predecessor unchanged. Null when the predecessor never expired.
-	ExpiresAt *int `json:"expires_at,omitempty"`
+	ExpiresAt *int `json:"expires_at"`
 
 	// Pat The successor token. Only its hash is stored; there is no way to recover it later. A repeated call with the predecessor while this token is unused returns a new secret for the same pat_id. The predecessor keeps working for this route only, until the successor's first successful request or one hour, whichever comes first.
 	Pat string `json:"pat"`
@@ -1054,17 +1096,17 @@ type OrgSummaryResponse struct {
 	GraceUntil           *int   `json:"grace_until"`
 	Id                   string `json:"id"`
 
-	// IsOwner Whether the signed-in caller is the workspace's single transferable owner (distinct from is_admin).
-	IsOwner          bool `json:"is_owner"`
-	MaxRetentionDays *int `json:"max_retention_days"`
+	// Letterhead The workspace letterhead printed on exports, or null when none is set.
+	Letterhead *OrgSummaryResponseLetterhead `json:"letterhead"`
+
+	// MatterCodePolicy Whether uploads by members must carry a matter_code: off, optional, or required (an upload without one is refused with org_matter_code_required).
+	MatterCodePolicy OrgSummaryResponseMatterCodePolicy `json:"matter_code_policy"`
+	MaxRetentionDays *int                               `json:"max_retention_days"`
 
 	// MemberCapSeconds The workspace-wide default per-member monthly spending cap against the pool. Null means no org-wide default.
 	MemberCapSeconds *int   `json:"member_cap_seconds"`
 	Name             string `json:"name"`
-
-	// OwnerUserId The id of the workspace's transferable owner, visible to every member. Falls back to the org's creator if owner_user_id was never explicitly set on the row.
-	OwnerUserId string `json:"owner_user_id"`
-	Plan        string `json:"plan"`
+	Plan             string `json:"plan"`
 
 	// PlanActive Whether the term itself is still running (ignores grace).
 	PlanActive bool `json:"plan_active"`
@@ -1080,6 +1122,9 @@ type OrgSummaryResponse struct {
 
 	// PoolExpiresAt Always null; minutes do not expire. Retained for compatibility until the next SDK major version.
 	PoolExpiresAt *int `json:"pool_expires_at"`
+
+	// RebillRateCentsPerHour The workspace's client rebill rate in US cents per hour of audio, used for usage reports and exports.
+	RebillRateCentsPerHour int `json:"rebill_rate_cents_per_hour"`
 
 	// RenewalCapped Whether renewal_failures has reached the cap the daily renewal lane stops retrying at.
 	RenewalCapped   bool `json:"renewal_capped"`
@@ -1114,6 +1159,16 @@ type OrgSummaryResponse struct {
 	// TaxIdLabel The buyer's own word for tax_id, e.g. VAT, EIN, ABN. Null unless the caller is an admin or holds the billing right.
 	TaxIdLabel *string `json:"tax_id_label"`
 }
+
+// OrgSummaryResponseLetterhead The workspace letterhead printed on exports, or null when none is set.
+type OrgSummaryResponseLetterhead struct {
+	AddressLines []string `json:"address_lines"`
+	Footer       string   `json:"footer"`
+	Name         string   `json:"name"`
+}
+
+// OrgSummaryResponseMatterCodePolicy Whether uploads by members must carry a matter_code: off, optional, or required (an upload without one is refused with org_matter_code_required).
+type OrgSummaryResponseMatterCodePolicy string
 
 // OrgTranscript One row of the organization's firm-custody transcript index. Never carries transcript body or content beyond the title.
 type OrgTranscript struct {
@@ -1665,8 +1720,8 @@ type CreateUploadJSONBody struct {
 	// MatterCode Free text, trimmed, at most 64 characters; blank is valid and clears it. Refused with org_matter_code_required when the caller's workspace sets matter_code_policy to required and this is absent or blank.
 	MatterCode *string `json:"matter_code,omitempty"`
 
-	// Mode Optional job mode, e.g. a private-result upload.
-	Mode *string `json:"mode,omitempty"`
+	// Mode standard (the default when absent or null) or private: a private-result upload saves no transcript and returns a password-protected archive. Any other value is refused.
+	Mode *CreateUploadJSONBodyMode `json:"mode,omitempty"`
 
 	// OriginSource Optional. Whether the audio is an uploaded file or a recording. Any other value is ignored, never refused. When absent, a retry inherits its retry_of job's value, and a Personal Access Token caller outside the Chrome extension is recorded as upload.
 	OriginSource *CreateUploadJSONBodyOriginSource `json:"origin_source,omitempty"`
@@ -1682,6 +1737,9 @@ type CreateUploadJSONBody struct {
 	TranscriptionOptions *CreateUploadRequestTranscriptionOptions `json:"transcription_options,omitempty"`
 }
 
+// CreateUploadJSONBodyMode defines parameters for CreateUpload.
+type CreateUploadJSONBodyMode string
+
 // CreateUploadJSONBodyOriginSource defines parameters for CreateUpload.
 type CreateUploadJSONBodyOriginSource string
 
@@ -1689,6 +1747,15 @@ type CreateUploadJSONBodyOriginSource string
 type CreateUploadRequestTranscriptionOptions struct {
 	// AutoGenerateInsights Override the account's automatic-Insights default for this upload alone. Omit to inherit the account default; an explicit false always suppresses automatic generation for this upload.
 	AutoGenerateInsights *bool `json:"auto_generate_insights,omitempty"`
+
+	// DictionaryIds Saved dictionaries to apply, by the 32-character lowercase hex ids that GET /v1/transcription-context lists. Their terms join the key terms and count toward the key-term limits. Duplicates are ignored; at most 50 distinct ids. A malformed id or one the caller cannot read is refused with invalid_transcription_options. On a language where key terms have no effect the selection is skipped, not refused.
+	DictionaryIds *[]string `json:"dictionary_ids,omitempty"`
+
+	// ExpectedLanguages Auto-detection hint: restrict language detection to these codes (any code accepted by language_code). Ignored when language_code is set. An unsupported code is refused with invalid_transcription_options. Key terms, a prompt and keep_disfluencies apply when every expected language supports them, are skipped when none does, and otherwise apply only if the detected language does.
+	ExpectedLanguages *[]string `json:"expected_languages,omitempty"`
+
+	// FallbackLanguage Auto-detection hint: the language to use when detection is unsure. Must be one of expected_languages, otherwise refused with invalid_transcription_options. Ignored when language_code is set.
+	FallbackLanguage *string `json:"fallback_language,omitempty"`
 
 	// KeepDisfluencies Keep disfluencies in the transcript instead of removing them. On many languages this also keeps repetitions, stutters and false starts; on others it keeps filler words only. Free, and allowed in private mode. Defaults to false. Only takes effect for the languages where key terms take effect; for any other language the server stores false.
 	KeepDisfluencies *bool `json:"keep_disfluencies,omitempty"`
@@ -1705,8 +1772,17 @@ type CreateUploadRequestTranscriptionOptions struct {
 	// Multichannel Transcribe each audio channel independently. Billed per channel: a stereo file counts twice, a 3-channel file three times, up to 8 channels, and the medical or vet surcharge applies on top of that; translation targets stay on a single duration. The channel count is the most channels any audio track of the file carries. A file with more than 8 channels, or one whose channel count cannot be read, falls back to mixed audio with speaker labels and is billed once. Without this option the file is transcribed as one mixed channel and billed once. The initial hold at upload creation is for a single channel; verification raises it to the per-channel amount and fails the job with insufficient_balance if the balance cannot cover it.
 	Multichannel *bool `json:"multichannel,omitempty"`
 
+	// OneOffKeyterms Key terms for this job only, merged with keyterms_prompt and the terms of any dictionary_ids. Same limits as keyterms_prompt: up to 1000 terms of at most 6 words each, and at most 1,000 words in total across all key terms. Refused with invalid_transcription_options on a language where key terms have no effect.
+	OneOffKeyterms *[]string `json:"one_off_keyterms,omitempty"`
+
+	// OneOffPrompt Prompt text for this job only, joined to prompt and any prompt_preset_id text. Refused with invalid_transcription_options on a language where a prompt has no effect. Shares the provider token budget with the key terms.
+	OneOffPrompt *string `json:"one_off_prompt,omitempty"`
+
 	// Prompt Free-text context to bias transcription toward. Refused with invalid_transcription_options when the language is one where a prompt has no effect. Sent as written, separately from the key terms; the two share one provider token budget.
 	Prompt *string `json:"prompt,omitempty"`
+
+	// PromptPresetId A saved prompt preset to apply, by the 32-character lowercase hex id that GET /v1/transcription-context lists. Its text is joined to prompt and one_off_prompt. A malformed id or one the caller cannot read is refused with invalid_transcription_options. On a language where a prompt has no effect the selection is skipped, not refused.
+	PromptPresetId *string `json:"prompt_preset_id,omitempty"`
 
 	// SpeakerDetection Label distinct speakers in the transcript. Independent of translation_targets.
 	SpeakerDetection *bool `json:"speaker_detection,omitempty"`
