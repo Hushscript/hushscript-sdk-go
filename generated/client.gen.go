@@ -111,19 +111,73 @@ func (e DictionaryEntryCategory) Valid() bool {
 
 // Defines values for JobFailureKind.
 const (
-	LessThannil      JobFailureKind = "<nil>"
-	MediaUndecodable JobFailureKind = "media_undecodable"
-	MediaUnreadable  JobFailureKind = "media_unreadable"
+	JobFailureKindLessThannil      JobFailureKind = "<nil>"
+	JobFailureKindMediaUndecodable JobFailureKind = "media_undecodable"
+	JobFailureKindMediaUnreadable  JobFailureKind = "media_unreadable"
 )
 
 // Valid indicates whether the value is a known member of the JobFailureKind enum.
 func (e JobFailureKind) Valid() bool {
 	switch e {
-	case LessThannil:
+	case JobFailureKindLessThannil:
 		return true
-	case MediaUndecodable:
+	case JobFailureKindMediaUndecodable:
 		return true
-	case MediaUnreadable:
+	case JobFailureKindMediaUnreadable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for JobOriginApp.
+const (
+	JobOriginAppAndroid     JobOriginApp = "android"
+	JobOriginAppApi         JobOriginApp = "api"
+	JobOriginAppExtension   JobOriginApp = "extension"
+	JobOriginAppIos         JobOriginApp = "ios"
+	JobOriginAppLessThannil JobOriginApp = "<nil>"
+	JobOriginAppWeb         JobOriginApp = "web"
+)
+
+// Valid indicates whether the value is a known member of the JobOriginApp enum.
+func (e JobOriginApp) Valid() bool {
+	switch e {
+	case JobOriginAppAndroid:
+		return true
+	case JobOriginAppApi:
+		return true
+	case JobOriginAppExtension:
+		return true
+	case JobOriginAppIos:
+		return true
+	case JobOriginAppLessThannil:
+		return true
+	case JobOriginAppWeb:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for JobOriginSource.
+const (
+	JobOriginSourceLessThannil JobOriginSource = "<nil>"
+	JobOriginSourceRecording   JobOriginSource = "recording"
+	JobOriginSourceUpload      JobOriginSource = "upload"
+	JobOriginSourceUrl         JobOriginSource = "url"
+)
+
+// Valid indicates whether the value is a known member of the JobOriginSource enum.
+func (e JobOriginSource) Valid() bool {
+	switch e {
+	case JobOriginSourceLessThannil:
+		return true
+	case JobOriginSourceRecording:
+		return true
+	case JobOriginSourceUpload:
+		return true
+	case JobOriginSourceUrl:
 		return true
 	default:
 		return false
@@ -184,6 +238,81 @@ func (e PurchaseResponseStatus) Valid() bool {
 	}
 }
 
+// Defines values for TransactionProvider.
+const (
+	Apple  TransactionProvider = "apple"
+	Google TransactionProvider = "google"
+	Stripe TransactionProvider = "stripe"
+)
+
+// Valid indicates whether the value is a known member of the TransactionProvider enum.
+func (e TransactionProvider) Valid() bool {
+	switch e {
+	case Apple:
+		return true
+	case Google:
+		return true
+	case Stripe:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TranscriptDetailOriginApp.
+const (
+	TranscriptDetailOriginAppAndroid     TranscriptDetailOriginApp = "android"
+	TranscriptDetailOriginAppApi         TranscriptDetailOriginApp = "api"
+	TranscriptDetailOriginAppExtension   TranscriptDetailOriginApp = "extension"
+	TranscriptDetailOriginAppIos         TranscriptDetailOriginApp = "ios"
+	TranscriptDetailOriginAppLessThannil TranscriptDetailOriginApp = "<nil>"
+	TranscriptDetailOriginAppWeb         TranscriptDetailOriginApp = "web"
+)
+
+// Valid indicates whether the value is a known member of the TranscriptDetailOriginApp enum.
+func (e TranscriptDetailOriginApp) Valid() bool {
+	switch e {
+	case TranscriptDetailOriginAppAndroid:
+		return true
+	case TranscriptDetailOriginAppApi:
+		return true
+	case TranscriptDetailOriginAppExtension:
+		return true
+	case TranscriptDetailOriginAppIos:
+		return true
+	case TranscriptDetailOriginAppLessThannil:
+		return true
+	case TranscriptDetailOriginAppWeb:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TranscriptDetailOriginSource.
+const (
+	TranscriptDetailOriginSourceLessThannil TranscriptDetailOriginSource = "<nil>"
+	TranscriptDetailOriginSourceRecording   TranscriptDetailOriginSource = "recording"
+	TranscriptDetailOriginSourceUpload      TranscriptDetailOriginSource = "upload"
+	TranscriptDetailOriginSourceUrl         TranscriptDetailOriginSource = "url"
+)
+
+// Valid indicates whether the value is a known member of the TranscriptDetailOriginSource enum.
+func (e TranscriptDetailOriginSource) Valid() bool {
+	switch e {
+	case TranscriptDetailOriginSourceLessThannil:
+		return true
+	case TranscriptDetailOriginSourceRecording:
+		return true
+	case TranscriptDetailOriginSourceUpload:
+		return true
+	case TranscriptDetailOriginSourceUrl:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TranscriptListRowInsightsState.
 const (
 	Failed     TranscriptListRowInsightsState = "failed"
@@ -202,6 +331,60 @@ func (e TranscriptListRowInsightsState) Valid() bool {
 	case None:
 		return true
 	case Ready:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TranscriptListRowOriginApp.
+const (
+	TranscriptListRowOriginAppAndroid     TranscriptListRowOriginApp = "android"
+	TranscriptListRowOriginAppApi         TranscriptListRowOriginApp = "api"
+	TranscriptListRowOriginAppExtension   TranscriptListRowOriginApp = "extension"
+	TranscriptListRowOriginAppIos         TranscriptListRowOriginApp = "ios"
+	TranscriptListRowOriginAppLessThannil TranscriptListRowOriginApp = "<nil>"
+	TranscriptListRowOriginAppWeb         TranscriptListRowOriginApp = "web"
+)
+
+// Valid indicates whether the value is a known member of the TranscriptListRowOriginApp enum.
+func (e TranscriptListRowOriginApp) Valid() bool {
+	switch e {
+	case TranscriptListRowOriginAppAndroid:
+		return true
+	case TranscriptListRowOriginAppApi:
+		return true
+	case TranscriptListRowOriginAppExtension:
+		return true
+	case TranscriptListRowOriginAppIos:
+		return true
+	case TranscriptListRowOriginAppLessThannil:
+		return true
+	case TranscriptListRowOriginAppWeb:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TranscriptListRowOriginSource.
+const (
+	TranscriptListRowOriginSourceLessThannil TranscriptListRowOriginSource = "<nil>"
+	TranscriptListRowOriginSourceRecording   TranscriptListRowOriginSource = "recording"
+	TranscriptListRowOriginSourceUpload      TranscriptListRowOriginSource = "upload"
+	TranscriptListRowOriginSourceUrl         TranscriptListRowOriginSource = "url"
+)
+
+// Valid indicates whether the value is a known member of the TranscriptListRowOriginSource enum.
+func (e TranscriptListRowOriginSource) Valid() bool {
+	switch e {
+	case TranscriptListRowOriginSourceLessThannil:
+		return true
+	case TranscriptListRowOriginSourceRecording:
+		return true
+	case TranscriptListRowOriginSourceUpload:
+		return true
+	case TranscriptListRowOriginSourceUrl:
 		return true
 	default:
 		return false
@@ -322,6 +505,27 @@ func (e OrgUsageReportCsvParamsGroupBy) Valid() bool {
 	}
 }
 
+// Defines values for CreateUploadJSONBodyOriginSource.
+const (
+	CreateUploadJSONBodyOriginSourceLessThannil CreateUploadJSONBodyOriginSource = "<nil>"
+	CreateUploadJSONBodyOriginSourceRecording   CreateUploadJSONBodyOriginSource = "recording"
+	CreateUploadJSONBodyOriginSourceUpload      CreateUploadJSONBodyOriginSource = "upload"
+)
+
+// Valid indicates whether the value is a known member of the CreateUploadJSONBodyOriginSource enum.
+func (e CreateUploadJSONBodyOriginSource) Valid() bool {
+	switch e {
+	case CreateUploadJSONBodyOriginSourceLessThannil:
+		return true
+	case CreateUploadJSONBodyOriginSourceRecording:
+		return true
+	case CreateUploadJSONBodyOriginSourceUpload:
+		return true
+	default:
+		return false
+	}
+}
+
 // AccountResponse defines model for AccountResponse.
 type AccountResponse struct {
 	// BalanceSeconds Net balance in seconds: the raw balance minus any clawback debt. May be negative.
@@ -395,7 +599,7 @@ type AgentCredentialsRotateResponse struct {
 
 // AgentSignupRequest The client must never supply amount: it is derived server side from pack.
 type AgentSignupRequest struct {
-	// AcceptTermsVersion Must equal the server's current policy version or the request is refused with policy_version_stale, which names the current value.
+	// AcceptTermsVersion Must be the server's current policy version or, for 30 days after the current version's date, the previous one; otherwise the request is refused with policy_version_stale, which names the current value.
 	AcceptTermsVersion string                  `json:"accept_terms_version"`
 	Agent              AgentSignupRequestAgent `json:"agent"`
 
@@ -657,15 +861,24 @@ type Job struct {
 	Mode         string `json:"mode"`
 
 	// Options A content-free summary of the transcription options a job was submitted with: what was requested, never the free-text content itself.
-	Options                OptionsSummary `json:"options"`
-	PrivateResultAvailable bool           `json:"private_result_available"`
-	PrivateResultExpiresAt *int           `json:"private_result_expires_at"`
+	Options OptionsSummary `json:"options"`
+
+	// OriginApp The app the job was created from: the web app, the Chrome extension, the Android or iOS app, or the API. Null when unknown, which is always the case for rows created before this field existed.
+	OriginApp *JobOriginApp `json:"origin_app"`
+
+	// OriginSource How the audio entered Hushscript: a file upload, an import from a link, or an in-app recording. Null when unknown, which is always the case for rows created before this field existed.
+	OriginSource           *JobOriginSource `json:"origin_source"`
+	PrivateResultAvailable bool             `json:"private_result_available"`
+	PrivateResultExpiresAt *int             `json:"private_result_expires_at"`
 
 	// RetryOf The id of an earlier failed job of yours that this job retries, set when the browser app re-uploaded a converted copy of an unreadable file, otherwise null.
 	RetryOf *string `json:"retry_of"`
 
 	// State One of uploading, fetching, queued, processing, awaiting_unlock, done or failed.
 	State string `json:"state"`
+
+	// Title The current title of this job's transcript, or null while the job has no transcript or the transcript has no title. Always null for a private-mode job, and null unless the caller may read transcripts: a personal access token needs the transcripts:read scope (a transcribe-only token always gets null).
+	Title *string `json:"title"`
 
 	// TranscriptId The resulting transcript's id, once transcription has finished.
 	TranscriptId *string `json:"transcript_id"`
@@ -676,6 +889,12 @@ type Job struct {
 
 // JobFailureKind Set when the file itself could not be read: `media_unreadable` when the upload could not be probed as audio, `media_undecodable` when the transcription provider could not decode it. Either way the file needs converting (for example to MP3 or WAV) and uploading again; nothing was charged and the hold was released. Null for every other job, including failures of any other kind and jobs that failed before this field existed.
 type JobFailureKind string
+
+// JobOriginApp The app the job was created from: the web app, the Chrome extension, the Android or iOS app, or the API. Null when unknown, which is always the case for rows created before this field existed.
+type JobOriginApp string
+
+// JobOriginSource How the audio entered Hushscript: a file upload, an import from a link, or an in-app recording. Null when unknown, which is always the case for rows created before this field existed.
+type JobOriginSource string
 
 // JobList defines model for JobList.
 type JobList struct {
@@ -689,8 +908,9 @@ type JobList struct {
 type OptionsSummary struct {
 	// AutoGenerateInsights This upload's override of automatic Insights generation, or null if it used the account default.
 	AutoGenerateInsights *bool `json:"auto_generate_insights"`
+	KeepDisfluencies     bool  `json:"keep_disfluencies"`
 
-	// Keyterms Whether a keyterms prompt was set. The terms themselves are not included.
+	// Keyterms Whether a keyterms prompt was set and applies. False when the language cannot use key terms, even if a saved dictionary was selected. The terms themselves are not included.
 	Keyterms bool `json:"keyterms"`
 
 	// LanguageCode The manually forced language, or null if language auto-detection was used.
@@ -698,10 +918,11 @@ type OptionsSummary struct {
 	MedicalMode  bool    `json:"medical_mode"`
 	Multichannel bool    `json:"multichannel"`
 
-	// Prompt Whether a free-text context prompt was set. The prompt itself is not included.
+	// Prompt Whether a free-text context prompt was set and applies. False when the language cannot use a prompt, even if a saved preset was selected. The prompt itself is not included.
 	Prompt             bool     `json:"prompt"`
 	SpeakerDetection   bool     `json:"speaker_detection"`
 	TranslationTargets []string `json:"translation_targets"`
+	VetMode            bool     `json:"vet_mode"`
 }
 
 // OrgAuditEntry defines model for OrgAuditEntry.
@@ -1000,11 +1221,17 @@ type Transaction struct {
 	PaymentMethodLast4 *string `json:"payment_method_last4"`
 	PaymentMethodType  *string `json:"payment_method_type"`
 
+	// Provider Where the purchase was paid: Stripe (card, wallet, bank), or a store (Apple, Google Play).
+	Provider TransactionProvider `json:"provider"`
+
 	// ReceiptNumber The public receipt reference, e.g. HS-20260101-abcdef0123456789-1.
 	ReceiptNumber *string `json:"receipt_number"`
 	Seconds       int     `json:"seconds"`
 	Status        string  `json:"status"`
 }
+
+// TransactionProvider Where the purchase was paid: Stripe (card, wallet, bank), or a store (Apple, Google Play).
+type TransactionProvider string
 
 // TransactionsResponse defines model for TransactionsResponse.
 type TransactionsResponse struct {
@@ -1036,12 +1263,24 @@ type TranscriptDetail struct {
 	// MatterCode The workspace matter this transcript is filed under, or null. Set at upload time and editable afterwards; always null for a transcript that was never funded by a workspace.
 	MatterCode *string `json:"matter_code"`
 
+	// OriginApp The app the job was created from: the web app, the Chrome extension, the Android or iOS app, or the API. Null when unknown, which is always the case for rows created before this field existed.
+	OriginApp *TranscriptDetailOriginApp `json:"origin_app"`
+
+	// OriginSource How the audio entered Hushscript: a file upload, an import from a link, or an in-app recording. Null when unknown, which is always the case for rows created before this field existed.
+	OriginSource *TranscriptDetailOriginSource `json:"origin_source"`
+
 	// SpeakerNames Provider speaker label mapped to a display name, for every speaker the caller has renamed.
 	SpeakerNames map[string]string `json:"speaker_names"`
 	Tags         []string          `json:"tags"`
 	Title        string            `json:"title"`
 	UpdatedAt    int               `json:"updated_at"`
 }
+
+// TranscriptDetailOriginApp The app the job was created from: the web app, the Chrome extension, the Android or iOS app, or the API. Null when unknown, which is always the case for rows created before this field existed.
+type TranscriptDetailOriginApp string
+
+// TranscriptDetailOriginSource How the audio entered Hushscript: a file upload, an import from a link, or an in-app recording. Null when unknown, which is always the case for rows created before this field existed.
+type TranscriptDetailOriginSource string
 
 // TranscriptEnvelope The transcript's full structured body.
 type TranscriptEnvelope struct {
@@ -1077,12 +1316,24 @@ type TranscriptListRow struct {
 
 	// Options A content-free summary of the transcription options a job was submitted with: what was requested, never the free-text content itself.
 	Options OptionsSummary `json:"options"`
-	Tags    []string       `json:"tags"`
-	Title   string         `json:"title"`
+
+	// OriginApp The app the job was created from: the web app, the Chrome extension, the Android or iOS app, or the API. Null when unknown, which is always the case for rows created before this field existed.
+	OriginApp *TranscriptListRowOriginApp `json:"origin_app"`
+
+	// OriginSource How the audio entered Hushscript: a file upload, an import from a link, or an in-app recording. Null when unknown, which is always the case for rows created before this field existed.
+	OriginSource *TranscriptListRowOriginSource `json:"origin_source"`
+	Tags         []string                       `json:"tags"`
+	Title        string                         `json:"title"`
 }
 
 // TranscriptListRowInsightsState A display hint only, never an authority on whether Insights may be generated or charged for.
 type TranscriptListRowInsightsState string
+
+// TranscriptListRowOriginApp The app the job was created from: the web app, the Chrome extension, the Android or iOS app, or the API. Null when unknown, which is always the case for rows created before this field existed.
+type TranscriptListRowOriginApp string
+
+// TranscriptListRowOriginSource How the audio entered Hushscript: a file upload, an import from a link, or an in-app recording. Null when unknown, which is always the case for rows created before this field existed.
+type TranscriptListRowOriginSource string
 
 // TranscriptionContextResponse Not paginated and carrying no cursor: both collections are capped when they are written (50 dictionaries, 20 prompt presets), so this response is always complete.
 type TranscriptionContextResponse struct {
@@ -1417,6 +1668,9 @@ type CreateUploadJSONBody struct {
 	// Mode Optional job mode, e.g. a private-result upload.
 	Mode *string `json:"mode,omitempty"`
 
+	// OriginSource Optional. Whether the audio is an uploaded file or a recording. Any other value is ignored, never refused. When absent, a retry inherits its retry_of job's value, and a Personal Access Token caller outside the Chrome extension is recorded as upload.
+	OriginSource *CreateUploadJSONBodyOriginSource `json:"origin_source,omitempty"`
+
 	// PartSizeBytes Optional smaller part size for a flaky connection. Clamped to this API's supported range; omit for the 32 MiB default.
 	PartSizeBytes *int `json:"part_size_bytes,omitempty"`
 
@@ -1428,31 +1682,40 @@ type CreateUploadJSONBody struct {
 	TranscriptionOptions *CreateUploadRequestTranscriptionOptions `json:"transcription_options,omitempty"`
 }
 
+// CreateUploadJSONBodyOriginSource defines parameters for CreateUpload.
+type CreateUploadJSONBodyOriginSource string
+
 // CreateUploadRequestTranscriptionOptions defines parameters for CreateUpload.
 type CreateUploadRequestTranscriptionOptions struct {
 	// AutoGenerateInsights Override the account's automatic-Insights default for this upload alone. Omit to inherit the account default; an explicit false always suppresses automatic generation for this upload.
 	AutoGenerateInsights *bool `json:"auto_generate_insights,omitempty"`
 
-	// KeytermsPrompt Domain vocabulary to bias transcription toward, up to 1000 terms of at most 6 words each.
+	// KeepDisfluencies Keep disfluencies in the transcript instead of removing them. On many languages this also keeps repetitions, stutters and false starts; on others it keeps filler words only. Free, and allowed in private mode. Defaults to false. Only takes effect for the languages where key terms take effect; for any other language the server stores false.
+	KeepDisfluencies *bool `json:"keep_disfluencies,omitempty"`
+
+	// KeytermsPrompt Domain vocabulary to bias transcription toward, up to 1000 terms of at most 6 words each, and at most 1,000 words in total after merging saved dictionaries and one-off terms. Refused with invalid_transcription_options when the language (language_code, or every expected language under auto-detection) is one where key terms have no effect, or when the merged terms and the prompt together exceed the provider token budget (how many fit depends on the script and the length of the terms).
 	KeytermsPrompt *[]string `json:"keyterms_prompt,omitempty"`
 
-	// LanguageCode Force a specific spoken language instead of auto-detection.
+	// LanguageCode Force a specific spoken language instead of auto-detection. Key terms, a prompt and filler words (keep_disfluencies) only take effect for the 33 languages AssemblyAI serves with its newest model; for the other languages, typed key terms or a typed prompt are refused with invalid_transcription_options.
 	LanguageCode *string `json:"language_code,omitempty"`
 
-	// MedicalMode Bill and transcribe as a medical dictation. Requires language_code to be one of en, es, fr, de; billed at a 100 percent surcharge on the duration.
+	// MedicalMode Bill and transcribe as a medical dictation. Requires language_code to be one of en, en_au, en_uk, en_us, es, fr, de, de_ch; billed at a 100 percent surcharge on the duration. Cannot be combined with vet_mode.
 	MedicalMode *bool `json:"medical_mode,omitempty"`
 
-	// Multichannel Transcribe each audio channel independently. Billed per channel: a stereo file counts twice, a 3-channel file three times, up to 8 channels, and the medical surcharge applies on top of that; translation targets stay on a single duration. The channel count is the most channels any audio track of the file carries. A file with more than 8 channels, or one whose channel count cannot be read, falls back to mixed audio with speaker labels and is billed once. Without this option the file is transcribed as one mixed channel and billed once. The initial hold at upload creation is for a single channel; verification raises it to the per-channel amount and fails the job with insufficient_balance if the balance cannot cover it.
+	// Multichannel Transcribe each audio channel independently. Billed per channel: a stereo file counts twice, a 3-channel file three times, up to 8 channels, and the medical or vet surcharge applies on top of that; translation targets stay on a single duration. The channel count is the most channels any audio track of the file carries. A file with more than 8 channels, or one whose channel count cannot be read, falls back to mixed audio with speaker labels and is billed once. Without this option the file is transcribed as one mixed channel and billed once. The initial hold at upload creation is for a single channel; verification raises it to the per-channel amount and fails the job with insufficient_balance if the balance cannot cover it.
 	Multichannel *bool `json:"multichannel,omitempty"`
 
-	// Prompt Free-text context to bias transcription toward.
+	// Prompt Free-text context to bias transcription toward. Refused with invalid_transcription_options when the language is one where a prompt has no effect. Sent as written, separately from the key terms; the two share one provider token budget.
 	Prompt *string `json:"prompt,omitempty"`
 
-	// SpeakerDetection Label distinct speakers in the transcript. Forced on automatically when translation_targets is non-empty.
+	// SpeakerDetection Label distinct speakers in the transcript. Independent of translation_targets.
 	SpeakerDetection *bool `json:"speaker_detection,omitempty"`
 
-	// TranslationTargets Locales to additionally translate the transcript into. Each target adds a 25 percent surcharge on the duration and forces speaker_detection on.
+	// TranslationTargets Locales to additionally translate the transcript into: any language code accepted by language_code except the regional variants (en_au, en_uk, en_us, de_ch), 99 in all. At most 15 distinct targets per upload (a saved edit holds the original plus 15 translations); more is refused with invalid_transcription_options. A target equal to the source language is refused. Each target adds a 25 percent surcharge on the duration.
 	TranslationTargets *[]string `json:"translation_targets,omitempty"`
+
+	// VetMode Beta. Transcribe as a veterinary dictation. Requires a manually set language_code from the supported list; auto-detection is refused. Billed at a 100 percent surcharge on the duration, exactly like medical_mode, and cannot be combined with medical_mode. Not available in private mode.
+	VetMode *bool `json:"vet_mode,omitempty"`
 }
 
 // CompleteUploadJSONBody defines parameters for CompleteUpload.
@@ -1910,7 +2173,7 @@ type ClientInterface interface {
 
 	// CreateUploadWithBody Start a new transcription upload and place a credit hold
 	//
-	// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
+	// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge: medical_mode or vet_mode, multichannel, translation), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -1919,7 +2182,7 @@ type ClientInterface interface {
 
 	// CreateUpload Start a new transcription upload and place a credit hold
 	//
-	// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
+	// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge: medical_mode or vet_mode, multichannel, translation), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -1960,7 +2223,7 @@ type ClientInterface interface {
 
 	// UploadPartWithBody Upload one part of a job's audio through this API
 	//
-	// Sends one part's raw bytes to be written into the job's in-progress R2 multipart upload. Only needed when direct-to-R2 presigned URLs are unavailable, or as a fallback for a part whose presigned PUT failed. A repeated PUT of the same part number replaces that part rather than adding to the declared total, so retries are always safe.
+	// Sends one part's raw bytes to be written into the job's in-progress R2 multipart upload. Only needed when direct-to-R2 presigned URLs are unavailable, or as a fallback for a part whose presigned PUT failed. A repeated PUT of the same part number replaces that part rather than adding to the declared total, so retries are always safe. A Content-Length header is required: the body is streamed to storage and held to that length, and a part sent without one (chunked transfer) is refused with 400 bad_request.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -2678,7 +2941,7 @@ func (c *Client) GetTranscript(ctx context.Context, id string, reqEditors ...Req
 
 // CreateUploadWithBody Start a new transcription upload and place a credit hold
 //
-// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
+// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge: medical_mode or vet_mode, multichannel, translation), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
 //
 // Takes any type of body and a specified content type.
 //
@@ -2697,7 +2960,7 @@ func (c *Client) CreateUploadWithBody(ctx context.Context, contentType string, b
 
 // CreateUpload Start a new transcription upload and place a credit hold
 //
-// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
+// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge: medical_mode or vet_mode, multichannel, translation), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -2788,7 +3051,7 @@ func (c *Client) GetUploadPartUrls(ctx context.Context, job string, params *GetU
 
 // UploadPartWithBody Upload one part of a job's audio through this API
 //
-// Sends one part's raw bytes to be written into the job's in-progress R2 multipart upload. Only needed when direct-to-R2 presigned URLs are unavailable, or as a fallback for a part whose presigned PUT failed. A repeated PUT of the same part number replaces that part rather than adding to the declared total, so retries are always safe.
+// Sends one part's raw bytes to be written into the job's in-progress R2 multipart upload. Only needed when direct-to-R2 presigned URLs are unavailable, or as a fallback for a part whose presigned PUT failed. A repeated PUT of the same part number replaces that part rather than adding to the declared total, so retries are always safe. A Content-Length header is required: the body is streamed to storage and held to that length, and a part sent without one (chunked transfer) is refused with 400 bad_request.
 //
 // Takes any type of body and a specified content type.
 //
@@ -5038,7 +5301,7 @@ type ClientWithResponsesInterface interface {
 
 	// CreateUploadWithBodyWithResponse Start a new transcription upload and place a credit hold
 	//
-	// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
+	// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge: medical_mode or vet_mode, multichannel, translation), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -5047,7 +5310,7 @@ type ClientWithResponsesInterface interface {
 
 	// CreateUploadWithResponse Start a new transcription upload and place a credit hold
 	//
-	// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
+	// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge: medical_mode or vet_mode, multichannel, translation), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -5092,7 +5355,7 @@ type ClientWithResponsesInterface interface {
 
 	// UploadPartWithBodyWithResponse Upload one part of a job's audio through this API
 	//
-	// Sends one part's raw bytes to be written into the job's in-progress R2 multipart upload. Only needed when direct-to-R2 presigned URLs are unavailable, or as a fallback for a part whose presigned PUT failed. A repeated PUT of the same part number replaces that part rather than adding to the declared total, so retries are always safe.
+	// Sends one part's raw bytes to be written into the job's in-progress R2 multipart upload. Only needed when direct-to-R2 presigned URLs are unavailable, or as a fallback for a part whose presigned PUT failed. A repeated PUT of the same part number replaces that part rather than adding to the declared total, so retries are always safe. A Content-Length header is required: the body is streamed to storage and held to that length, and a part sent without one (chunked transfer) is refused with 400 bad_request.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -8961,7 +9224,7 @@ func (c *ClientWithResponses) GetTranscriptWithResponse(ctx context.Context, id 
 
 // CreateUploadWithBodyWithResponse Start a new transcription upload and place a credit hold
 //
-// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
+// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge: medical_mode or vet_mode, multichannel, translation), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -8976,7 +9239,7 @@ func (c *ClientWithResponses) CreateUploadWithBodyWithResponse(ctx context.Conte
 
 // CreateUploadWithResponse Start a new transcription upload and place a credit hold
 //
-// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
+// Declares the size and duration of a new audio upload, places a credit hold for the billable seconds (duration plus any transcription_options surcharge: medical_mode or vet_mode, multichannel, translation), and returns a job id plus, when direct-to-R2 uploads are available, a first page of presigned part URLs. Resending the same idempotency_key returns the already-created job instead of opening a second one. Long direct-to-R2 transfers must call heartbeat_upload periodically or the job is reaped as idle.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -9051,7 +9314,7 @@ func (c *ClientWithResponses) GetUploadPartUrlsWithResponse(ctx context.Context,
 
 // UploadPartWithBodyWithResponse Upload one part of a job's audio through this API
 //
-// Sends one part's raw bytes to be written into the job's in-progress R2 multipart upload. Only needed when direct-to-R2 presigned URLs are unavailable, or as a fallback for a part whose presigned PUT failed. A repeated PUT of the same part number replaces that part rather than adding to the declared total, so retries are always safe.
+// Sends one part's raw bytes to be written into the job's in-progress R2 multipart upload. Only needed when direct-to-R2 presigned URLs are unavailable, or as a fallback for a part whose presigned PUT failed. A repeated PUT of the same part number replaces that part rather than adding to the declared total, so retries are always safe. A Content-Length header is required: the body is streamed to storage and held to that length, and a part sent without one (chunked transfer) is refused with 400 bad_request.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //

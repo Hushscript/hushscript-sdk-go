@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+* add the `vet_mode` (Veterinary mode, beta; en, en_au, en_uk, en_us, es, fr, de, de_ch; refused with `medical_mode` and in private mode) and `keep_disfluencies` (free, default off) transcription options, both echoed in the job options summary; the medical language list is synced.
+
+### Bug Fixes
+
+* translation targets no longer force speaker detection on: `Speakers` is sent as set; `TranslateTo` takes at most 15 distinct languages (an `invalid_option` error before any request); the API accepts every base language as a target (99 codes, no regional variants); `Medical` and `Vet` compare `Language` after trimming and lowercasing, as the API does; the generated client is synced with the API spec.
+* the API spec is synced with production: `translation_targets` no longer declares `maxItems` (the API counts the 15-target cap after dedup, as the SDK already does); the conformance suite is pinned to the `v1.1.0` tag.
+
+### Documentation
+
+* README links point at the live pricing page and the SDK section of the developers page; the old `/pricing` and `/sdks` URLs redirect there.
+
 ## [1.1.1](https://github.com/Hushscript/hushscript-sdk-go/compare/v1.1.0...v1.1.1) (2026-10-31)
 
 

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -25,19 +26,12 @@ const (
 	maxKeyterms        = 1000
 	maxKeytermWords    = 6
 	maxKeytermChars    = 128
+	maxKeytermTotal    = 1000
 	maxPromptChars     = 2000
+	maxTranslateTo     = 15
 	maxMatterCodeChars = 64
 	minKeyLength       = 16
 	maxKeyLength       = 128
-)
-
-// The backend compiles a prompt and key terms into one provider prompt out of these fixed ASCII
-// pieces (compile_transcription_context in the backend), and the prompt cap applies to the result.
-const (
-	compiledPromptPrefix       = "Transcription context:\n\nBehavior:\n"
-	compiledPromptVocabulary   = "\n\nVocabulary:\n"
-	compiledPromptInstructions = "\n\nInstructions:\n- Prefer exact spellings when the audio supports them.\n- Do not insert terms that are not audible.\n- Preserve speaker turns and timestamps."
-	compiledPromptOverhead     = len(compiledPromptPrefix) + len(compiledPromptVocabulary) + len(compiledPromptInstructions)
 )
 
 func formatInt(v int64) string { return strconv.FormatInt(v, 10) }
@@ -126,21 +120,83 @@ func checkKey(red redactor, key string) error {
 	return nil
 }
 
+// medicalLanguages mirrors the backend's MEDICAL_LANGUAGES, compared after the backend's own normalization.
+var medicalLanguages = []string{"en", "en_au", "en_uk", "en_us", "es", "fr", "de", "de_ch"}
+
+// vetLanguages mirrors the backend's VET_LANGUAGES, compared after the backend's own normalization.
+var vetLanguages = []string{"en", "en_au", "en_uk", "en_us", "es", "fr", "de", "de_ch"}
+
+// stt37Languages mirrors the API's STT37_LANGUAGES: the languages that apply key terms and a prompt.
+var stt37Languages = []string{
+	"af", "ar", "ca", "da", "de", "de_ch", "en", "en_au", "en_uk", "en_us",
+	"es", "et", "fa", "fi", "fr", "gl", "he", "hi", "it", "ja",
+	"ko", "mr", "nl", "nn", "no", "pt", "ro", "ru", "sv", "tr",
+	"ur", "vi", "zh",
+}
+
+// universal2Languages is the rest of the API's source languages; the server names a code in neither list itself.
+var universal2Languages = []string{
+	"am", "as", "az", "ba", "be", "bg", "bn", "bo", "br", "bs",
+	"cs", "cy", "el", "eu", "fo", "gu", "ha", "haw", "hr", "ht",
+	"hu", "hy", "id", "is", "jw", "ka", "kk", "km", "kn", "la",
+	"lb", "ln", "lo", "lt", "lv", "mg", "mi", "mk", "ml", "mn",
+	"ms", "mt", "my", "ne", "oc", "pa", "pl", "ps", "sa", "sd",
+	"si", "sk", "sl", "sn", "so", "sq", "sr", "su", "sw", "ta",
+	"te", "tg", "th", "tk", "tl", "tt", "uk", "uz", "yi", "yo",
+}
+
 func checkOptions(red redactor, opts *TranscribeOptions) error {
-	if opts.Medical {
-		switch opts.Language {
-		case "en", "es", "fr", "de":
-		default:
-			return invalidOption(red, "Medical needs Language to be one of en, es, fr or de.", nil)
-		}
+	if opts.Medical && opts.Vet {
+		return invalidOption(red, "Medical and Vet cannot be combined.", nil)
+	}
+	if opts.Medical && !slices.Contains(medicalLanguages, sourceLanguage(opts)) {
+		return invalidOption(red, "Medical needs Language to be one of en, en_au, en_uk, en_us, es, fr, de or de_ch.", nil)
+	}
+	if opts.Vet && !slices.Contains(vetLanguages, sourceLanguage(opts)) {
+		return invalidOption(red, "Vet needs Language to be one of en, en_au, en_uk, en_us, es, fr, de or de_ch.", nil)
 	}
 	if err := checkContext(red, opts); err != nil {
 		return err
+	}
+	if distinctTargets(opts.TranslateTo) > maxTranslateTo {
+		return invalidOption(red, "TranslateTo takes at most 15 distinct languages.", nil)
 	}
 	if len([]rune(opts.MatterCode)) > maxMatterCodeChars {
 		return invalidOption(red, "MatterCode is at most 64 characters.", nil)
 	}
 	return nil
+}
+
+// distinctTargets is how many translation targets the backend keeps: each trimmed (Unicode white space)
+// and lowercased (ASCII), blank ones dropped, repeated ones counted once.
+func distinctTargets(targets []string) int {
+	var seen map[string]struct{}
+	for _, raw := range targets {
+		target := strings.TrimFunc(raw, isContextSpace)
+		if target == "" {
+			continue
+		}
+		if seen == nil {
+			seen = make(map[string]struct{}, len(targets))
+		}
+		seen[asciiLower(target)] = struct{}{}
+	}
+	return len(seen)
+}
+
+// asciiLower lowercases A to Z only, as the backend's to_ascii_lowercase does.
+func asciiLower(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r >= 'A' && r <= 'Z' {
+			return r + 'a' - 'A'
+		}
+		return r
+	}, s)
+}
+
+// sourceLanguage is Language as the backend reads it: trimmed (Unicode white space) and lowercased (ASCII).
+func sourceLanguage(opts *TranscribeOptions) string {
+	return asciiLower(strings.TrimFunc(opts.Language, isContextSpace))
 }
 
 // isContextSpace is Unicode White_Space, the set Rust's str::trim and split_whitespace use on the
@@ -180,15 +236,24 @@ func normalizeContext(opts *TranscribeOptions) contextOptions {
 	return out
 }
 
-// compiledPromptChars is the length in code points of the provider prompt the backend builds from a
-// prompt and key terms: the fixed pieces, the prompt, each term wrapped in two characters, and a
-// separator between terms.
-func compiledPromptChars(prompt string, terms []string) int {
-	total := compiledPromptOverhead + utf8.RuneCountInString(prompt) + len(terms) - 1
-	for _, term := range terms {
-		total += utf8.RuneCountInString(term) + 2
+// checkContextLanguage refuses key terms or a prompt in a language the API does not apply them in. The
+// language is trimmed and lowercased first, as the backend does; auto-detect and a code in neither list
+// pass.
+func checkContextLanguage(red redactor, opts *TranscribeOptions, normalized contextOptions) error {
+	language := sourceLanguage(opts)
+	if !slices.Contains(universal2Languages, language) {
+		return nil
 	}
-	return total
+	var option string
+	switch {
+	case len(normalized.terms) > 0:
+		option = "keyterms"
+	case normalized.prompt != "":
+		option = "prompt"
+	default:
+		return nil
+	}
+	return invalidOption(red, option+` does not work for language "`+language+`"; it needs language to be one of `+strings.Join(stt37Languages, ", ")+`.`, nil)
 }
 
 // checkContext applies the backend's key term and prompt limits to what normalizeContext leaves, so a
@@ -196,6 +261,9 @@ func compiledPromptChars(prompt string, terms []string) int {
 // and cannot be seen here; the server stays the authority on them.
 func checkContext(red redactor, opts *TranscribeOptions) error {
 	normalized := normalizeContext(opts)
+	if err := checkContextLanguage(red, opts, normalized); err != nil {
+		return err
+	}
 	for i, term := range normalized.terms {
 		index := normalized.origin[i]
 		if len(strings.FieldsFunc(term, isContextSpace)) > maxKeytermWords {
@@ -208,17 +276,15 @@ func checkContext(red redactor, opts *TranscribeOptions) error {
 	if len(normalized.terms) > maxKeyterms {
 		return invalidOption(red, "Keyterms takes at most 1000 unique terms.", nil)
 	}
-	if normalized.prompt == "" {
-		return nil
+	words := 0
+	for _, term := range normalized.terms {
+		words += len(strings.FieldsFunc(term, isContextSpace))
 	}
-	if len(normalized.terms) == 0 {
-		if utf8.RuneCountInString(normalized.prompt) > maxPromptChars {
-			return invalidOption(red, "Prompt is longer than 2000 characters.", nil)
-		}
-		return nil
+	if words > maxKeytermTotal {
+		return invalidOption(red, "Keyterms take at most 1000 words in total ("+strconv.Itoa(words)+").", nil)
 	}
-	if total := compiledPromptChars(normalized.prompt, normalized.terms); total > maxPromptChars {
-		return invalidOption(red, "Prompt and Keyterms together exceed 2000 characters ("+strconv.Itoa(total)+").", nil)
+	if utf8.RuneCountInString(normalized.prompt) > maxPromptChars {
+		return invalidOption(red, "Prompt is longer than 2000 characters.", nil)
 	}
 	return nil
 }
@@ -357,6 +423,8 @@ type transcriptionOptions struct {
 	KeytermsPrompt       []string `json:"keyterms_prompt,omitempty"`
 	Prompt               string   `json:"prompt,omitempty"`
 	MedicalMode          bool     `json:"medical_mode,omitempty"`
+	VetMode              bool     `json:"vet_mode,omitempty"`
+	KeepDisfluencies     bool     `json:"keep_disfluencies,omitempty"`
 	Multichannel         bool     `json:"multichannel,omitempty"`
 	AutoGenerateInsights *bool    `json:"auto_generate_insights,omitempty"`
 }
@@ -366,7 +434,7 @@ func bodyFrom(opts *TranscribeOptions, size int64, declared int, key string) cre
 	normalized := normalizeContext(opts)
 	options := transcriptionOptions{
 		LanguageCode: opts.Language, SpeakerDetection: opts.Speakers, TranslationTargets: opts.TranslateTo,
-		KeytermsPrompt: normalized.terms, Prompt: normalized.prompt, MedicalMode: opts.Medical, Multichannel: opts.Multichannel,
+		KeytermsPrompt: normalized.terms, Prompt: normalized.prompt, MedicalMode: opts.Medical, VetMode: opts.Vet, KeepDisfluencies: opts.KeepDisfluencies, Multichannel: opts.Multichannel,
 		AutoGenerateInsights: opts.AutoInsights,
 	}
 	// Every field is omitempty, so the options encode to {} exactly when the caller set none of them.

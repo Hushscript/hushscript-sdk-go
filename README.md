@@ -7,7 +7,7 @@ the failures in between so you do not have to.
 ## Why Hushscript
 
 - **No subscription.** You buy prepaid minute packs, and nothing recurs. Current prices are on the
-  [pricing page](https://hushscript.com/pricing).
+  [pricing page](https://hushscript.com/pay-as-you-go-transcription-pricing).
 - **The audio you send isn't kept.** The audio sent for transcription isn't kept after processing. Stored
   transcripts are encrypted at rest, and you choose how long they stay.
 - **Free speaker labels and AI insights.** Speaker labels carry no extra charge (medical mode and
@@ -34,7 +34,7 @@ the failures in between so you do not have to.
   allow it).
 - Let an agent sign up, pay at a hosted checkout and claim its own token, with no human account.
 
-[Website](https://hushscript.com) · [Pricing](https://hushscript.com/pricing) · [SDK docs](https://hushscript.com/sdks) · [API reference](https://hushscript.com/developers)
+[Website](https://hushscript.com) · [Pricing](https://hushscript.com/pay-as-you-go-transcription-pricing) · [SDK docs](https://hushscript.com/developers#sdks-and-cli) · [API reference](https://hushscript.com/developers)
 
 ## Quick start
 
@@ -91,9 +91,13 @@ prompt means the option is off and nothing is sent. The limits, checked before a
 
 - at most 1000 `Keyterms`;
 - each term at most 6 words and at most 128 characters (code points);
-- `Prompt` at most 2000 characters (code points);
-- with both set, the 2000 applies to the compiled prompt the backend builds:
-  `203 + len(prompt) + sum(len(term) + 2) + (terms - 1)`.
+- at most 1000 words in total across all `Keyterms`;
+- `Prompt` at most 2000 characters (code points), on its own.
+
+The two are sent separately, so `Prompt` is not counted with the key terms. The server also checks a
+token budget for both together; the SDK does not estimate it, and the server answers 422 when it is
+exceeded. Languages that the universal-2 model serves (most languages outside the supported list) refuse
+`Keyterms` and `Prompt` with `invalid_option`; the message lists the languages that accept them.
 
 Saved dictionaries and prompt presets are merged on the server, so the SDK cannot count them. The
 server stays the authority and answers 422 `invalid_transcription_options` without saying which limit failed.
@@ -469,7 +473,7 @@ leaked token.
 Personal accounts buy prepaid minute packs. The price of a pack depends on your country, and your
 minutes stay valid for a year after your last transcription or purchase. A transcription uses the
 minutes of the recording; medical mode and each translation target use more. Current prices are on
-[hushscript.com/pricing](https://hushscript.com/pricing).
+[hushscript.com/pay-as-you-go-transcription-pricing](https://hushscript.com/pay-as-you-go-transcription-pricing).
 
 ## Requirements
 
@@ -478,7 +482,7 @@ The vulnerability check remains a required gate on every runtime.
 
 ## Links
 
-- Documentation: <https://hushscript.com/sdks>
+- Documentation: <https://hushscript.com/developers#sdks-and-cli>
 - REST API reference: <https://hushscript.com/developers>
 - Package on pkg.go.dev: <https://pkg.go.dev/github.com/Hushscript/hushscript-sdk-go>
 - Source: <https://github.com/Hushscript/hushscript-sdk-go>
